@@ -316,6 +316,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
     <div class="timer" id="timer">2:00</div>
     <div class="right small muted" id="modeLabel">フリー</div>
   </div>
+  <div class="card" id="tutBox" hidden style="padding:10px 14px;border-color:var(--ink);background:var(--ink-soft)"></div>
   <div class="mission" id="mission"><span class="txt muted">ミッションは最初の60秒。満たす言葉は2倍。</span></div>
   <div class="preview" id="preview">　</div>
   <div class="boardwrap" id="boardwrap">
@@ -83180,7 +83181,7 @@ const TUT=(function(){
     {text:'となり合うマスを指でなぞって言葉を作る。まずは <b>さくら</b>。なぞり終えて指を離すと決定。', path:[0,1,2], word:'さくら'},
     {text:'「つ」「や」「ゆ」「よ」「あ〜お」は小さい字としても使える。「つ」を「っ」として <b>きって</b>。', path:[4,5,6], word:'きって'},
     {text:'「は/ば ぱ」のように2つ書かれたマスはどちらで読んでもいい。「ば」と読んで <b>そば</b>。ななめにも進める。', path:[8,9], word:'そば'},
-    {text:'<span class="tag">ミッション</span> 条件に合う言葉は得点が2倍！ 「す」で始まる言葉を、下から上に <b>すし</b>。タップで1マスずつ選んで「決定」でもOK。', path:[14,13], word:'すし', mission:true},
+    {text:'ゲーム中は<b>ミッション</b>が出る（下の黄色い枠）。条件に合う言葉は得点が<b>2倍</b>。いまは「す」で始まる言葉なので、下から上に <b>すし</b>。タップで1マスずつ選んで「決定」でもOK。', path:[14,13], word:'すし', mission:true},
     {text:'これで準備完了。本番は120秒、長い言葉・めずらしい言葉（★）ほど高得点。', done:true},
   ];
   let step=0;
@@ -83193,15 +83194,17 @@ const TUT=(function(){
     $('countdown').hidden=true; show('vGame'); G.over=false; render();
   }
   function render(){
-    const st=STEPS[step], mb=$('mission'); mb.dataset.id='tut';
-    mb.className='mission on'; mb.innerHTML=`<span class="txt">${st.text}</span>`+(st.done?'<button class="primary" id="btnTutDone" style="flex:none">本番へ</button>':'');
+    const st=STEPS[step], mb=$('mission'), tb=$('tutBox');
+    tb.hidden=false; tb.innerHTML=`<span class="small" style="font-family:var(--disp);font-weight:900;color:var(--ink)">STEP ${Math.min(step+1,STEPS.length)}/${STEPS.length}</span><div style="margin-top:2px">${st.text}</div>`+(st.done?'<div class="ctrls" style="margin-top:8px;justify-content:flex-start"><button class="primary" id="btnTutDone">本番へ</button></div>':'');
+    if(st.mission){ mb.dataset.id='tut'; mb.className='mission on'; mb.innerHTML=`<span class="tag">ミッション</span><span class="txt">${MISSION.label}</span><span class="x2">×2</span>`; }
+    else { mb.dataset.id=''; mb.className='mission'; mb.innerHTML='<span class="txt muted">ミッションはあとで出てくる</span>'; }
     document.querySelectorAll('.tile').forEach(el=>{ const k=st.path?st.path.indexOf(+el.dataset.i):-1; el.classList.toggle('hint',k>=0); let b=el.querySelector('.hn'); if(k>=0){ if(!b){ b=document.createElement('span'); b.className='hn'; el.appendChild(b); } b.textContent=k+1; } else if(b) b.remove(); });
     const svg=$('lines'); if(st.path&&st.path.length>1){ const pts=st.path.map(i=>`${(i&3)*25+12.5},${(i>>2)*25+12.5}`); svg.innerHTML=`<path class="guide" d="M${pts.join('L')}"/><circle class="guide-dot" r="2.2"><animateMotion dur="1.6s" repeatCount="indefinite" path="M${pts.join('L')}"/></circle>`; } else svg.innerHTML='';
     if(st.done){ $('btnTutDone').onclick=()=>{ end(); startGame('free',(Math.random()*2**32)>>>0); }; }
   }
   function onWord(w){ const st=STEPS[step]; if(st.path && canon(w)===canon(st.word)){ step++; setTimeout(render,500); } }
   function activeMission(){ const st=STEPS[step]; return st&&st.mission?MISSION:null; }
-  function end(){ G.over=true; $('btnGiveUp').textContent='終了'; document.querySelectorAll('.tile.hint').forEach(el=>el.classList.remove('hint')); document.querySelectorAll('.hn').forEach(b=>b.remove()); $('lines').innerHTML=''; }
+  function end(){ G.over=true; $('tutBox').hidden=true; $('btnGiveUp').textContent='終了'; document.querySelectorAll('.tile.hint').forEach(el=>el.classList.remove('hint')); document.querySelectorAll('.hn').forEach(b=>b.remove()); $('lines').innerHTML=''; }
   return {start,onWord,activeMission,end,get active(){ return G.mode==='tutorial'&&!G.over; }};
 })();
 
