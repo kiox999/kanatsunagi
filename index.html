@@ -218,7 +218,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
       <li>「つ」「や」「ゆ」「よ」「あ〜お」は小さい字（っ・ゃ・ぁ…）としても使える。「ちよ」と「ちょ」のような大小違いは同じ言葉として1回だけ。</li>
       <li>濁点・半濁点は原則なし。たまに「か/が」のように2つ書かれたマスが出たら、そこだけどちらで読んでもいい。</li>
       <li>長い言葉、めずらしい言葉ほど高得点（2字1点・3字2点・4字5点・5字9点・6字14点・7字20点 × レア度）。小さい字を使うと+1、「か/が」マスを濁点で読むと+2。3文字以下は星なし。めずらしさは <span class="star">★</span>やや <span class="star">★★</span>レア <span class="star">★★★</span>激レア（辞書でよく使う印のない言葉は文字数で★1〜3）。</li>
-      <li><b>ミッション</b>は1ゲームに2回（開始直後と後半）。満たす言葉は得点が<b>2倍</b>。</li>
+      <li><b>ミッション</b>は最初の60秒だけ。「○を含む」「4文字以上」など文字の条件で、満たす言葉は得点が<b>2倍</b>。</li>
       <li>10秒に5回つづけて辞書にない言葉を出すと、2秒間なぞれなくなる。</li>
     </ul>
   </details>
@@ -297,7 +297,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
     <div class="timer" id="timer">2:00</div>
     <div class="right small muted" id="modeLabel">フリー</div>
   </div>
-  <div class="mission" id="mission"><span class="txt muted">ミッションはときどき現れる。満たす言葉は2倍。</span></div>
+  <div class="mission" id="mission"><span class="txt muted">ミッションは最初の60秒。満たす言葉は2倍。</span></div>
   <div class="preview" id="preview">　</div>
   <div class="boardwrap" id="boardwrap">
     <div class="board" id="board"></div>
@@ -82905,39 +82905,30 @@ const SND=(function(){
 const MED_RE=/[胃腸肝臓肺腎脾膵脳脈骨筋腱膚咽喉歯腹病症炎癌腫瘍瘤薬剤菌疹痛傷療診麻酔医嘔吐痢尿妊娠胎]|神経|看護/;
 const FOOD_RE=/[飯麺鍋汁菓餅豆茶酒肉魚米麦粥餃麹醤酢油乳果菜焼煮蒸揚漬味塩砂糖餡饅鮨寿司丼弁当]/;
 function entryIs(e,flag,re){ return !!((e[1]&flag) || (e[2]&&re.test(e[2]))); }
+// ミッションは「文字」に関するものだけ。1ゲーム1つ、最初の60秒。
 const MISSION_POOL=[
-  {id:'med',  label:'医学・からだに関係する言葉', test:(w,e)=>e.some(x=>entryIs(x,1,MED_RE)), min:3},
-  {id:'food', label:'食べ物・料理の言葉',         test:(w,e)=>e.some(x=>entryIs(x,2,FOOD_RE)), min:3},
-  {id:'sport',label:'スポーツ・遊びの言葉',       test:(w,e)=>e.some(x=>x[1]&4), min:3},
-  {id:'sci',  label:'理科っぽい言葉',             test:(w,e)=>e.some(x=>x[1]&8), min:3},
-  {id:'kata', label:'カタカナ語',                 test:(w,e)=>e.some(x=>x[1]&16), min:3},
-  {id:'n',    label:'「ん」を含む言葉',           test:w=>w.includes('ん'), min:3},
-  {id:'small',label:'小さい字（っ・ゃ・ょ…）を含む言葉', test:w=>SMALL_RE.test(w), min:3},
-  {id:'daku', label:'濁点・半濁点を含む言葉',     test:w=>DAKU_RE.test(w), min:3},
-  {id:'long', label:'5文字以上の言葉',           test:w=>w.length>=5, min:3},
-  {id:'rare', label:'レア以上の言葉',             test:w=>wordTier(w)>=2, min:3},
-  {id:'vowel',label:'「い」で終わる言葉',          test:w=>w.endsWith('い'), min:3},
-  {id:'u',    label:'「う」で終わる言葉',          test:w=>w.endsWith('う'), min:3},
+  {id:'n',    label:'「ん」を含む言葉',           test:w=>w.includes('ん'), min:4},
+  {id:'small',label:'小さい字（っ・ゃ・ょ…）を含む言葉', test:w=>SMALL_RE.test(w), min:4},
+  {id:'daku', label:'濁点・半濁点で読む言葉',     test:w=>DAKU_RE.test(w), min:4},
+  {id:'len4', label:'4文字以上の言葉',           test:w=>w.length>=4, min:5},
+  {id:'len5', label:'5文字以上の言葉',           test:w=>w.length>=5, min:4},
+  {id:'rare', label:'★★以上の言葉',              test:w=>wordTier(w)>=2, min:4},
+  {id:'same', label:'同じ字を2回使う言葉',        test:w=>new Set(canon(w)).size<canon(w).length, min:4},
 ];
 function pickMissions(words,rand,tiles){
   const pool=MISSION_POOL.slice();
-  // board-specific: starts with a kana on the board
   const bases=[...new Set(tiles.map(t=>t.base))];
-  for(const b of bases) pool.push({id:'start'+b,start:true,label:`「${b}」で始まる言葉`,test:w=>w[0]===b||w[0]===DAKU[b]||w[0]===HANDAKU[b],min:4});
+  for(const b of bases){
+    const hit=ch=>ch===b||ch===DAKU[b]||ch===HANDAKU[b]||ch===SMALL[b];
+    pool.push({id:'start'+b,label:`「${b}」で始まる言葉`,test:w=>hit(w[0]),min:5});
+    pool.push({id:'end'+b,label:`「${b}」で終わる言葉`,test:w=>hit(w[w.length-1]),min:5});
+    pool.push({id:'has'+b,label:`「${b}」を含む言葉`,test:w=>[...w].some(hit),min:6});
+  }
   const ok=pool.filter(m=>{ const n=words.filter(w=>m.test(w,DICT.get(w)||[])).length; return n>=m.min && n<=words.length*0.4; }); // 少なすぎ・多すぎは出さない
-  for(let i=ok.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[ok[i],ok[j]]=[ok[j],ok[i]]}
-  // ルール：「○で始まる」系は出しても1つ、出すなら最初（開始直後から）。ジャンル系を1つは入れたい。
-  const flagged=ok.find(m=>['med','food','sport','sci','kata'].includes(m.id));
-  const starter=ok.find(m=>m.start);
-  const others=ok.filter(m=>!m.start&&m!==flagged);
-  const res=[];
-  if(starter && rand()<0.5) res.push(starter);
-  if(flagged && !res.includes(flagged)) res.push(flagged);
-  for(const m of others){ if(res.length>=2) break; res.push(m); }
-  if(res.length<2 && starter && !res.includes(starter)) res.unshift(starter);
-  return res.slice(0,2);
+  if(!ok.length) return [];
+  return [ok[Math.floor(rand()*ok.length)]];
 }
-const MISSION_SLOTS=[[0,58],[62,112]]; // 1つ目は開始直後から、2つ目は後半
+const MISSION_SLOTS=[[0,60]]; // 開始〜60秒
 
 /* ---------- game state ---------- */
 const G={mode:null,seed:0,tiles:[],words:[],missions:[],found:new Map(),foundCanon:new Map(),score:0,path:[],start:0,timerId:null,over:true,room:null,misses:[],lockUntil:0,rejected:[]};
@@ -83090,7 +83081,7 @@ function tick(){
   } else if(mb.dataset.id){
     mb.dataset.id=''; mb.className='mission';
     const next=G.missions.find((x,k)=>MISSION_SLOTS[k][0]>el);
-    mb.innerHTML=`<span class="txt muted">${next?'つぎのミッションまで少し待て…':'ミッション終了。ラストスパート！'}</span>`;
+    mb.innerHTML=`<span class="txt muted">ミッション終了。ラストスパート！</span>`;
   }
   if(rem<=10&&rem>0) SND.beat(Math.ceil(rem));
   if(rem<=0) endGame();
@@ -83133,7 +83124,7 @@ function showResult(){
   const medal=(G.mode==='daily'&&!G.retry)?medalFor(G.score,G.par):0;
   $('resScore').innerHTML=`${G.score}${medal?' <span style="font-size:32px">'+MEDAL[medal]+'</span>':''}`;
   const th=medalThresholds(G.par);
-  $('resMissions').innerHTML=G.missions.map((m,k)=>{ const n=G.words.filter(w=>m.test(w,DICT.get(w)||[])).length, got=[...G.found.values()].filter(v=>v.mission===m.id).length; return `<span class="mchip">ミッション${k+1}</span> ${m.label}：${got}/${n}語`; }).join('<br>')+(G.mode==='daily'?`<br><span class="muted">メダル基準 🥉${th[0]} 🥈${th[1]} 🥇${th[2]}</span>`:'');
+  $('resMissions').innerHTML=G.missions.map((m,k)=>{ const n=G.words.filter(w=>m.test(w,DICT.get(w)||[])).length, got=[...G.found.values()].filter(v=>v.mission===m.id).length; return `<span class="mchip">ミッション</span> ${m.label}：${got}/${n}語`; }).join('<br>')+(G.mode==='daily'?`<br><span class="muted">メダル基準 🥉${th[0]} 🥈${th[1]} 🥇${th[2]}</span>`:'');
   const best=[...G.found.entries()].sort((a,b)=>b[1].pts-a[1].pts)[0];
   const maxPts=G.words.reduce((s,w)=>s+baseScore(w),0);
   $('resStats').innerHTML=`<span>見つけた <b>${G.found.size}</b> / ${G.words.length}語</span><span>最高の一語 <b>${best?best[0]+'（'+best[1].pts+'点）':'—'}</b></span><span>全部とれば <b>${maxPts}</b>点（ミッション除く）</span>`;
@@ -83154,7 +83145,7 @@ function renderWordList(){
     const ms=G.missions.map((m,k)=>m.test(w,e)?k+1:0).filter(Boolean);
     const row=document.createElement('div'); row.className='row '+(hit?'hit':'miss');
     row.dataset.w=fw||w;
-    row.innerHTML=`<span class="w">${fw||w}${stars(tier)}${e[0][3]?'<span class="mchip" style="color:var(--ink);border-color:var(--ink);background:var(--ink-soft)">みんなの辞書</span>':''}${ms.map(k=>`<span class="mchip">M${k}</span>`).join('')}</span><span class="k">${e.slice(0,2).map(x=>x[2]).filter(x=>x!==w).join('／')}</span><span class="p">${hit?hit.pts:baseScore(w)}</span>`;
+    row.innerHTML=`<span class="w">${fw||w}${stars(tier)}${e[0][3]?'<span class="mchip" style="color:var(--ink);border-color:var(--ink);background:var(--ink-soft)">みんなの辞書</span>':''}${ms.length?'<span class="mchip">M</span>':''}</span><span class="k">${e.slice(0,2).map(x=>x[2]).filter(x=>x!==w).join('／')}</span><span class="p">${hit?hit.pts:baseScore(w)}</span>`;
     frag.appendChild(row);
   }
   wl.appendChild(frag);
@@ -83170,11 +83161,11 @@ const TUT=(function(){
     {text:'となり合うマスを指でなぞって言葉を作る。まずは <b>さくら</b>。なぞり終えて指を離すと決定。', path:[0,1,2], word:'さくら'},
     {text:'「つ」「や」「ゆ」「よ」「あ〜お」は小さい字としても使える。「つ」を「っ」として <b>きって</b>。', path:[4,5,6], word:'きって'},
     {text:'「は/ば ぱ」のように2つ書かれたマスはどちらで読んでもいい。「ば」と読んで <b>そば</b>。ななめにも進める。', path:[8,9], word:'そば'},
-    {text:'<span class="tag">ミッション</span> 食べ物の言葉を作ると得点が2倍！ 下から上に <b>すし</b>。タップで1マスずつ選んで「決定」でもOK。', path:[14,13], word:'すし', mission:true},
+    {text:'<span class="tag">ミッション</span> 条件に合う言葉は得点が2倍！ 「す」で始まる言葉を、下から上に <b>すし</b>。タップで1マスずつ選んで「決定」でもOK。', path:[14,13], word:'すし', mission:true},
     {text:'これで準備完了。本番は120秒、長い言葉・めずらしい言葉（★）ほど高得点。', done:true},
   ];
   let step=0;
-  const MISSION={id:'tut',label:'食べ物・料理の言葉',test:(w,e)=>e.some(x=>entryIs(x,2,FOOD_RE))};
+  const MISSION={id:'tut',label:'「す」で始まる言葉',test:w=>w[0]==='す'};
   function start(){
     G.mode='tutorial'; G.seed=0; G.found=new Map(); G.foundCanon=new Map(); G.score=0; G.path=[]; G.over=true; G.retry=false;
     G.tiles=TILES.map(t=>({...t})); G.words=solve(G.tiles); G.missions=[]; G.par=boardPar(G.words); step=0;
@@ -83251,7 +83242,7 @@ function recordHistory(){
     const t=wordTier(w);
     if(t>=2){ const e=DICT.get(w); const prev=H.rare[w]; if(!prev||v.pts>prev.pts) H.rare[w]={t,d:e[0][2],pts:v.pts,date:today}; }
   }
-  const mids=new Set([...G.found.values()].map(v=>v.mission).filter(Boolean)); if(mids.size>=2) H.doubleMission++;
+  H.maxMission=Math.max(H.maxMission||0,[...G.found.values()].filter(v=>v.mission).length);
   save('kt_hist',H);
   const now=achievements(H,dailyAll()).filter(a=>a[2]).map(a=>a[0]).filter(n=>!before.has(n));
   G.newAch=now;
@@ -83275,7 +83266,7 @@ function achievements(H,all){
     ['食いしん坊','食べ物の言葉を累計10語',(H.foodWords||0)>=10],['美食家','食べ物の言葉を累計50語',(H.foodWords||0)>=50],
     ['体育会系','スポーツ・遊びの言葉を累計10語',(H.sportWords||0)>=10],['科学者','理科の言葉を累計10語',(H.sciWords||0)>=10],
     ['帰国子女','カタカナ語を累計20語',(H.kataWords||0)>=20],
-    ['二刀流','1ゲームで両方のミッションを達成',(H.doubleMission||0)>=1],
+    ['ミッション職人','1ゲームでミッション語を5語',(H.maxMission||0)>=5],
     ['初勝利','対戦で1位になる',(H.multiWins||0)>=1],['常勝','対戦で5回1位になる',(H.multiWins||0)>=5],
   ];
 }
