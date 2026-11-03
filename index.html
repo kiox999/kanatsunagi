@@ -249,6 +249,17 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
   </div>
 </section>
 
+<!-- ADMIN（みんなの辞書の承認。URL末尾に #admin） -->
+<section class="view" id="vAdmin" hidden>
+  <div class="card" id="adminGate"><h2 style="font-size:18px;margin-bottom:8px">みんなの辞書 管理</h2><div class="row"><input type="password" id="adminPass" placeholder="管理の合言葉"><button class="primary" id="adminGo">開く</button></div><p class="err" id="adminMsg" style="margin:8px 0 0"></p></div>
+  <div id="adminBody" hidden class="view">
+    <div class="card"><div class="row" style="justify-content:space-between"><h2 style="font-size:18px">申請一覧</h2><span class="small muted" id="adminCount"></span></div></div>
+    <div class="view" id="adminList"></div>
+    <div class="card"><h3 style="font-size:15px;margin-bottom:8px">採用済み</h3><div class="found" id="adminExtra"></div></div>
+  </div>
+  <div class="ctrls"><button id="btnAdminBack">ホームへ</button></div>
+</section>
+
 <!-- HISTORY -->
 <section class="view" id="vHistory" hidden>
   <div class="card"><h2 style="font-size:18px;margin-bottom:6px">記録</h2><div class="stats" id="histStats"></div></div>
@@ -334,6 +345,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
     </div>
     <div class="wl" id="wordList" style="margin-top:10px"></div>
   </div>
+  <div class="card" id="resReject" hidden></div>
 </section>
 
 <footer>辞書データ：JMdict（EDRDG, CC BY-SA 4.0）をもとに作成</footer>
@@ -82674,7 +82686,8 @@ window.KT_FIREBASE_CONFIG = {
       onSnapshot(next,err){ const cb=snap=>next({exists:snap.exists(),data:()=>snap.val()||undefined}); r.on('value',cb,e=>err&&err({code:'unavailable',message:String(e)})); return ()=>r.off('value',cb); }
     };
   }
-  window.KT_FIREBASE={db:{doc:docRef},uid};
+  async function all(path){ const snap=await rtdb.ref('kana/'+path).once('value'); return snap.val()||{}; }
+  window.KT_FIREBASE={db:{doc:docRef,all},uid};
 })();
 
 </script>
@@ -82926,7 +82939,7 @@ function pickMissions(words,rand,tiles){
 const MISSION_SLOTS=[[0,58],[62,112]]; // 1つ目は開始直後から、2つ目は後半
 
 /* ---------- game state ---------- */
-const G={mode:null,seed:0,tiles:[],words:[],missions:[],found:new Map(),foundCanon:new Map(),score:0,path:[],start:0,timerId:null,over:true,room:null,misses:[],lockUntil:0};
+const G={mode:null,seed:0,tiles:[],words:[],missions:[],found:new Map(),foundCanon:new Map(),score:0,path:[],start:0,timerId:null,over:true,room:null,misses:[],lockUntil:0,rejected:[]};
 const DUR=120;
 
 function todayKey(){ const d=new Date(Date.now()+9*3600e3); return d.toISOString().slice(0,10); } // JST date
@@ -83010,7 +83023,8 @@ bw.addEventListener('pointerdown',e=>{
   const last=G.path[G.path.length-1];
   tapOnLast=(G.path.length>0 && i===last);
   if(tapOnLast){ /* 最後のマスから続ける（ドラッグ）か、タップで取り消し */ }
-  else if(G.path.length && !G.path.includes(i) && NEIGH[last].includes(i)) tryAdd(i);
+  else if(G.path.includes(i)){ G.path=G.path.slice(0,G.path.indexOf(i)+1); updateSel(); } // 途中のマス → そこまで戻す
+  else if(G.path.length && NEIGH[last].includes(i)) tryAdd(i);
   else { G.path=[i]; updateSel(); SND.tap(1); }
 });
 bw.addEventListener('pointermove',e=>{
@@ -83026,7 +83040,7 @@ bw.addEventListener('pointerup',e=>{
 });
 bw.addEventListener('pointercancel',()=>{dragging=false});
 $('btnClear').onclick=()=>{G.path=[];updateSel()};
-$('btnSubmit').onclick=()=>{ if(G.path.length>=2) submit(); };
+$('btnSubmit').onclick=()=>{ if(G.path.length>=2) submit(); else if(G.path.length===1) feedback('2文字以上つなげてね','dup'); };
 $('btnGiveUp').onclick=()=>{ if(G.mode==='tutorial'){ TUT.end(); show('vHome'); refreshHome(); return; } if(!G.over) endGame(); };
 
 function flash(cls){ const p=G.path.slice(); document.querySelectorAll('.tile').forEach(el=>{ if(p.includes(+el.dataset.i)){ el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);} }); setTimeout(()=>document.querySelectorAll('.tile.'+cls).forEach(el=>el.classList.remove(cls)),500); }
@@ -83053,6 +83067,7 @@ function submit(){
     flash(dup?'flash-dup':'flash-bad'); if(dup) SND.dup(); else SND.bad(); G.path=[]; updateSel();
     feedback(dup?'もう見つけた言葉':'辞書にない言葉', dup?'dup':'bad');
     if(!dup && G.mode!=='tutorial'){
+      const base=G.path.map(i=>G.tiles[i].base).join(''); if(G.path.length>=2 && !G.rejected.includes(base) && G.rejected.length<30) G.rejected.push(base);
       const now=Date.now(); G.misses=G.misses.filter(t=>now-t<10000); G.misses.push(now);
       if(G.misses.length>=5){ G.misses=[]; G.lockUntil=now+2000; SND.penalty();
         const cd=$('countdown'); cd.innerHTML='<span style="font-size:.4em;color:var(--bad);text-align:center;line-height:1.3">あてずっぽうは<br>だめです</span>'; cd.hidden=false;
@@ -83082,7 +83097,7 @@ function tick(){
 
 /* ---------- game flow ---------- */
 function startGame(mode,seed,opts){
-  G.mode=mode; G.seed=seed; G.found=new Map(); G.foundCanon=new Map(); G.score=0; G.misses=[]; G.lockUntil=0; G.path=[]; G.over=true;
+  G.mode=mode; G.seed=seed; G.found=new Map(); G.foundCanon=new Map(); G.score=0; G.misses=[]; G.lockUntil=0; G.rejected=[]; G.path=[]; G.over=true;
   const {tiles,words,rand}=makeBoard(seed);
   G.tiles=tiles; G.words=words; G.missions=pickMissions(words,rand,tiles); G.par=boardPar(words); G.retry=!!(opts&&opts.retry);
   renderBoard(); $('found').innerHTML=''; $('score').innerHTML='0<small>点</small>'; $('timer').textContent='2:00'; $('timer').classList.remove('low');
@@ -83124,7 +83139,7 @@ function showResult(){
   $('resAch').innerHTML=(G.newAch&&G.newAch.length)?`<span class="mchip">実績解除</span> ${G.newAch.join('／')}　<span class="muted">着せ替えが増えているかも → 設定</span>`:'';
   $('resRank').hidden=(G.mode!=='multi');
   $('btnAgain').textContent=G.mode==='daily'?'同じ盤面で練習':G.mode==='multi'?'部屋にもどる':'もう一回';
-  renderResBoard(); renderWordList();
+  renderResBoard(); renderWordList(); DICTX.renderRejected();
   show('vResult');
 }
 function renderWordList(){
@@ -83138,7 +83153,7 @@ function renderWordList(){
     const ms=G.missions.map((m,k)=>m.test(w,e)?k+1:0).filter(Boolean);
     const row=document.createElement('div'); row.className='row '+(hit?'hit':'miss');
     row.dataset.w=fw||w;
-    row.innerHTML=`<span class="w">${fw||w}${stars(tier)}${ms.map(k=>`<span class="mchip">M${k}</span>`).join('')}</span><span class="k">${e.slice(0,2).map(x=>x[2]).filter(x=>x!==w).join('／')}</span><span class="p">${hit?hit.pts:baseScore(w)}</span>`;
+    row.innerHTML=`<span class="w">${fw||w}${stars(tier)}${e[0][3]?'<span class="mchip" style="color:var(--ink);border-color:var(--ink);background:var(--ink-soft)">みんなの辞書</span>':''}${ms.map(k=>`<span class="mchip">M${k}</span>`).join('')}</span><span class="k">${e.slice(0,2).map(x=>x[2]).filter(x=>x!==w).join('／')}</span><span class="p">${hit?hit.pts:baseScore(w)}</span>`;
     frag.appendChild(row);
   }
   wl.appendChild(frag);
@@ -83370,7 +83385,76 @@ const MP=(function(){
   function leave(){ if(unsub){unsub();unsub=null;} room=null; G.room=null; }
   $('btnCreate').onclick=create; $('btnJoin').onclick=join; $('btnStart').onclick=start;
   $('btnLeave').onclick=()=>{ leave(); show('vHome'); refreshHome(); };
-  return {openLobby,submitResult,backToLobby,leave};
+  return {openLobby,submitResult,backToLobby,leave,db:()=>db,uid:()=>uid,ready:()=>ready,nick,esc};
+})();
+
+/* ---------- みんなの辞書（申請・承認・読み込み） ---------- */
+const DICTX=(function(){
+  const GENRES=[['','なし'],['1','医学・からだ'],['2','食べ物'],['4','スポーツ・遊び'],['8','理科'],['16','カタカナ語']];
+  // 管理用の合言葉（SHA-256）。変えるときは下のハッシュを差し替える。
+  const ADMIN_HASH='a3e64479b1352349106f039db8458213632b4caaf6aec83acedd2aa78c0edbb7';
+  async function sha(s){ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+  async function dbAll(path){ const db=MP.db(); if(!db) return {}; if(db.all) return db.all(path); const q=await db.collection(path).get(); const o={}; q.docs.forEach(d=>{ o[d.id]=d.data(); }); return o; }
+  function addWord(w,entry){ if(!/^[ぁ-ん]{2,7}$/.test(w)) return; const prev=DICT.get(w); if(prev){ if(!prev.some(e=>e[2]===entry[2])) prev.push(entry); return; } DICT.set(w,[entry]); let node=TRIE; for(const ch of w) node=node[ch]||(node[ch]=Object.create(null)); node.$=1; }
+  async function loadExtra(){ try{ await MP.ready(); const all=await dbAll('extra'); let n=0; for(const [w,v] of Object.entries(all||{})){ if(v&&v.ok!==false){ addWord(w,[1,+v.f||0,v.d||w,true]); n++; } } return n; }catch(e){ return 0; } }
+  function renderRejected(){
+    const box=$('resReject'); if(!box) return;
+    const list=G.rejected.filter(w=>!DICT.has(w));
+    if(!list.length||!MP.db()){ box.hidden=true; return; }
+    box.hidden=false;
+    box.innerHTML=`<div class="small muted" style="margin-bottom:6px">辞書になかった言葉（本当に言葉なら申請できる。採用されたらみんなの辞書に入る）</div><div class="found">${list.map(w=>`<button class="fw" data-w="${w}"><b>${w}</b><i>申請</i></button>`).join('')}</div><div id="propForm" hidden style="margin-top:10px"></div>`;
+    box.querySelectorAll('button[data-w]').forEach(b=>b.onclick=()=>openForm(b.dataset.w));
+  }
+  function openForm(w){
+    const f=$('propForm'); f.hidden=false;
+    let nick=''; try{ nick=localStorage.getItem('kt_nick')||''; }catch(e){}
+    f.innerHTML=`<div class="card" style="padding:10px 12px"><b style="font-family:var(--disp);font-size:18px">${w}</b>
+      <div class="row" style="margin-top:8px"><input type="text" id="propKanji" maxlength="20" placeholder="表記（漢字・カタカナなど）"></div>
+      <div class="row" style="margin-top:6px"><input type="text" id="propNote" maxlength="60" placeholder="ひとこと（どういう言葉か）"></div>
+      <div class="row" style="margin-top:6px"><input type="text" id="propBy" maxlength="12" placeholder="なまえ" value="${MP.esc(nick)}"></div>
+      <div class="row" style="margin-top:8px"><button class="primary" id="propSend">申請する</button><button class="ghost" id="propCancel">やめる</button><span class="small muted" id="propMsg"></span></div></div>`;
+    $('propCancel').onclick=()=>{ f.hidden=true; };
+    $('propSend').onclick=async()=>{
+      const db=MP.db(); if(!db) return;
+      const d=$('propKanji').value.trim(), note=$('propNote').value.trim(), by=$('propBy').value.trim()||'名無し';
+      $('propSend').disabled=true;
+      try{ const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); await db.doc('proposals/'+id).set({w,d,note,by,t:Date.now(),status:'pending'}); $('propMsg').textContent='送った！'; setTimeout(()=>{ f.hidden=true; },900);
+        try{ localStorage.setItem('kt_nick',by); }catch(e){} }
+      catch(e){ $('propMsg').textContent='送れなかった'; $('propSend').disabled=false; }
+    };
+  }
+  // 管理画面
+  async function openAdmin(){
+    show('vAdmin');
+    $('adminBody').hidden=true; $('adminGate').hidden=false; $('adminMsg').textContent='';
+    $('adminGo').onclick=async()=>{ const h=await sha($('adminPass').value); if(h!==ADMIN_HASH){ $('adminMsg').textContent='合言葉が違う'; return; } $('adminGate').hidden=true; $('adminBody').hidden=false; renderAdmin(); };
+  }
+  async function renderAdmin(){
+    await MP.ready(); const db=MP.db(); if(!db){ $('adminList').innerHTML='<p class="err">通信の準備ができていない</p>'; return; }
+    const all=await dbAll('proposals'); const extra=await dbAll('extra');
+    const items=Object.entries(all||{}).map(([id,v])=>({id,...v})).sort((a,b)=>b.t-a.t);
+    const pend=items.filter(x=>x.status==='pending');
+    $('adminCount').textContent=`未処理 ${pend.length} ／ 採用済み ${Object.keys(extra||{}).length}語`;
+    const esc=MP.esc;
+    $('adminList').innerHTML=pend.length?pend.map(x=>`<div class="card" style="padding:10px 12px" data-id="${x.id}">
+      <div class="row" style="justify-content:space-between"><b style="font-family:var(--disp);font-size:18px">${esc(x.w)}</b><span class="small muted">${new Date(x.t).toLocaleString('ja-JP')}</span></div>
+      <div class="small">${esc(x.d||'')} ${x.note?'— '+esc(x.note):''} <span class="muted">by ${esc(x.by||'')}</span>${DICT.has(x.w)?' <span class="mchip">辞書にあり</span>':''}</div>
+      <div class="row" style="margin-top:8px;flex-wrap:wrap"><input type="text" class="adKanji" value="${esc(x.d||'')}" placeholder="表記" style="max-width:160px"><select class="adGenre">${GENRES.map(g=>`<option value="${g[0]}">${g[1]}</option>`).join('')}</select><button class="primary adOk">採用</button><button class="adNo">却下</button></div></div>`).join(''):'<p class="muted">未処理の申請はない</p>';
+    $('adminList').querySelectorAll('[data-id]').forEach(card=>{
+      const id=card.dataset.id, x=items.find(i=>i.id===id);
+      card.querySelector('.adOk').onclick=async()=>{ const d=card.querySelector('.adKanji').value.trim()||x.w, f=+card.querySelector('.adGenre').value||0;
+        try{ await db.doc('extra/'+x.w).set({d,f,by:x.by||'',at:Date.now(),ok:true}); await db.doc('proposals/'+id).update({status:'ok'}); addWord(x.w,[1,f,d,true]); card.remove(); }catch(e){ card.querySelector('.adOk').textContent='失敗'; } };
+      card.querySelector('.adNo').onclick=async()=>{ try{ await db.doc('proposals/'+id).update({status:'ng'}); card.remove(); }catch(e){} };
+    });
+    const ex=Object.entries(extra||{}).sort((a,b)=>(b[1].at||0)-(a[1].at||0));
+    $('adminExtra').innerHTML=ex.length?ex.map(([w,v])=>`<span class="fw" data-w="${esc(w)}"><b>${esc(w)}</b><i>${esc(v.d||'')}</i><i>${(GENRES.find(g=>+g[0]===(+v.f||0))||['','なし'])[1]}</i><button class="ghost small adDel" style="padding:0 6px">×</button></span>`).join(''):'<span class="muted small">まだない</span>';
+    $('adminExtra').querySelectorAll('.adDel').forEach(b=>b.onclick=async()=>{ const w=b.closest('[data-w]').dataset.w; try{ await db.doc('extra/'+w).set({ok:false,at:Date.now()}); b.closest('[data-w]').remove(); }catch(e){} });
+  }
+  $('btnAdminBack').onclick=()=>{ show('vHome'); refreshHome(); };
+  if(location.hash==='#admin') openAdmin();
+  window.addEventListener('hashchange',()=>{ if(location.hash==='#admin') openAdmin(); });
+  loadExtra();
+  return {renderRejected,openAdmin,loadExtra};
 })();
 
 applySettings();
