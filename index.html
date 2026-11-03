@@ -169,6 +169,8 @@ input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px 
 .seg button.on{background:var(--ink);color:var(--tile-sel-fg);border-color:var(--ink)}
 .seg button.f-maru{font-family:"Zen Maru Gothic",sans-serif}.seg button.f-gothic{font-family:"M PLUS 1p",sans-serif}.seg button.f-mincho{font-family:"Zen Old Mincho",serif}.seg button.f-klee{font-family:"Klee One",cursive}
 /* history */
+details summary::-webkit-details-marker{display:none}
+details[open] summary span:last-child{transform:rotate(180deg)}
 .ach{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .ac{padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--paper);font-size:12.5px}
 .ac.got{border-color:var(--gold);background:var(--gold-soft)}
@@ -250,8 +252,8 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
 <!-- HISTORY -->
 <section class="view" id="vHistory" hidden>
   <div class="card"><h2 style="font-size:18px;margin-bottom:6px">記録</h2><div class="stats" id="histStats"></div></div>
-  <div class="card"><h3 style="font-size:15px;margin-bottom:8px">実績</h3><div class="ach" id="achList"></div></div>
-  <div class="card"><h3 style="font-size:15px;margin-bottom:8px">見つけたレア単語 <span class="muted small" id="rareCount"></span></h3><div class="rare" id="rareList"></div></div>
+  <details class="card" id="achBox"><summary style="cursor:pointer;font-family:var(--disp);font-weight:700;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center"><span>実績 <span class="muted small" id="achCount"></span></span><span class="muted small">▼</span></summary><div class="ach" id="achList" style="margin-top:10px"></div></details>
+  <details class="card" open><summary style="cursor:pointer;font-family:var(--disp);font-weight:700;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center"><span>見つけたレア単語 <span class="muted small" id="rareCount"></span></span><span class="muted small">▼</span></summary><div class="rare" id="rareList" style="margin-top:10px"></div></details>
   <div class="card"><h3 style="font-size:15px;margin-bottom:8px">リセット</h3><div class="ctrls" style="justify-content:flex-start"><button id="btnResetHist">記録・実績をリセット</button><button id="btnResetAll">デイリーも含めて全部</button></div><p class="notice" id="resetNote" style="margin:8px 0 0">このブラウザに保存された記録を消す。元には戻せない。</p></div>
 </section>
 
@@ -83273,6 +83275,7 @@ function renderHistory(){
   const dv=Object.values(all);
   $('histStats').innerHTML=`<span>プレイ <b>${H.games}</b>回</span><span>見つけた言葉 <b>${H.words}</b></span><span>最高得点 <b>${H.best}</b></span><span>最高の一語 <b>${H.bestWord?H.bestWord.w+'（'+H.bestWord.pts+'）':'—'}</b></span><span>ミッション達成 <b>${H.missions}</b></span><span>デイリー <b>${dv.length}</b>日 🥇${dv.filter(x=>x.medal===3).length} 🥈${dv.filter(x=>x.medal===2).length} 🥉${dv.filter(x=>x.medal===1).length}</span>`;
   const ac=achievements(H,all);
+  $('achCount').textContent=`${ac.filter(a=>a[2]).length} / ${ac.length} 解除`;
   $('achList').innerHTML=ac.map(([n,d,got])=>`<div class="ac ${got?'got':'lock'}"><b>${got?'✓ ':''}${n}</b>${d}</div>`).join('');
   const rl=Object.entries(H.rare).sort((a,b)=>b[1].t-a[1].t||b[1].pts-a[1].pts||a[0].localeCompare(b[0],'ja'));
   $('rareCount').textContent=rl.length?`${rl.length}語`:'';
