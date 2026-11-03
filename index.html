@@ -82809,7 +82809,7 @@ function baseScore(w){ return Math.round(BASE[Math.min(w.length,7)]*MULT[wordTie
 function stars(t){ return t>0?`<span class="star" title="${TIER_NAME[t]}">${'★'.repeat(t)}</span>`:''; }
 // デイリーのメダル基準：盤面の上位15語の合計を基準にする
 function boardPar(words){ return words.reduce((s,w)=>s+baseScore(w),0); } // 盤面の全語合計
-const MEDAL_PCT=[0.10,0.20,0.40];
+const MEDAL_PCT=[0.10,0.17,0.25];
 function medalThresholds(par){ return MEDAL_PCT.map(p=>Math.max(5,Math.round(par*p))); }
 function medalFor(score,par){ const t=medalThresholds(par); return score>=t[2]?3:score>=t[1]?2:score>=t[0]?1:0; }
 const MEDAL=['','🥉','🥈','🥇'];
