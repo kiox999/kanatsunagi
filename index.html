@@ -82821,7 +82821,7 @@ const SKINS=[
   {id:'default',name:'標準',sw:['#2f4b8a','#eef1f5','#ffffff','#dde5f7'],unlock:null},
   {id:'washi',name:'和紙',sw:['#8a3b2b','#efe6d2','#fbf6ea','#f1e7c6'],unlock:'五文字'},
   {id:'chalk',name:'黒板',sw:['#ffe08a','#1f3a2f','#2a4c3f','#36584b'],unlock:'常連'},
-  {id:'karte',name:'カルテ',sw:['#1f7a8c','#e7eef3','#ffffff','#c9d6e0'],unlock:'医学生'},
+  {id:'karte',name:'カルテ',sw:['#1f7a8c','#e7eef3','#ffffff','#c9d6e0'],unlock:'保健委員'},
   {id:'night',name:'夜空',sw:['#ffd166','#0d1326','#1c2850','#28355e'],unlock:'三日坊主卒業'},
   {id:'neon',name:'ネオン',sw:['#ff3cac','#0b0b16','#1a1a33','#2ef2ff'],unlock:'三百点'},
 ];
@@ -83251,7 +83251,7 @@ function achievements(H,all){
     ['ミッション達成','ミッション語を5回',H.missions>=5],['ミッションマスター','ミッション語を30回',H.missions>=30],
     ['初メダル','デイリーでメダル',medals>=1],['金メダル','デイリーで🥇',gold>=1],['金5枚','デイリーで🥇を5回',gold>=5],
     ['三日坊主卒業','デイリー3日連続',best>=3],['皆勤','デイリー7日連続',best>=7],
-    ['医学生','医学の言葉を累計10語',(H.medWords||0)>=10],['医者','医学の言葉を累計50語',(H.medWords||0)>=50],
+    ['保健委員','からだ・医学の言葉を累計10語',(H.medWords||0)>=10],['からだ博士','からだ・医学の言葉を累計50語',(H.medWords||0)>=50],
     ['二刀流','1ゲームで両方のミッションを達成',(H.doubleMission||0)>=1],
     ['初勝利','対戦で1位になる',(H.multiWins||0)>=1],['常勝','対戦で5回1位になる',(H.multiWins||0)>=5],
   ];
