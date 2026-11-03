@@ -211,8 +211,8 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
     <button class="mode" id="mTut"><span class="ico">？</span><div><b>あそびかたを練習</b><span>1分で覚えるチュートリアル。</span></div></button>
     <button class="mode" id="mMulti"><span class="ico">対</span><div><b>みんなで対戦</b><span id="multiInfo">同じ盤面で同時スタート。合言葉で集合。</span></div></button>
   </div>
-  <div class="rules">
-    <b>あそびかた</b>
+  <details class="rules" id="rulesBox">
+    <summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between"><b>あそびかた</b><span class="muted small">▼</span></summary>
     <ul>
       <li>となり合うマスをなぞって、ひらがなの言葉を作る（ななめもOK、同じマスは1回まで）。</li>
       <li>「つ」「や」「ゆ」「よ」「あ〜お」は小さい字（っ・ゃ・ぁ…）としても使える。「ちよ」と「ちょ」のような大小違いは同じ言葉として1回だけ。</li>
@@ -221,7 +221,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
       <li><b>ミッション</b>は1ゲームに2回（開始直後と後半）。満たす言葉は得点が<b>2倍</b>。</li>
       <li>10秒に5回つづけて辞書にない言葉を出すと、2秒間なぞれなくなる。</li>
     </ul>
-  </div>
+  </details>
   <div class="homebtns"><button id="btnSettings">設定</button><button id="btnHistory">履歴・実績</button></div>
 </section>
 
@@ -254,7 +254,6 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
   <div class="card"><h2 style="font-size:18px;margin-bottom:6px">記録</h2><div class="stats" id="histStats"></div></div>
   <details class="card" id="achBox"><summary style="cursor:pointer;font-family:var(--disp);font-weight:700;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center"><span>実績 <span class="muted small" id="achCount"></span></span><span class="muted small">▼</span></summary><div class="ach" id="achList" style="margin-top:10px"></div></details>
   <details class="card" open><summary style="cursor:pointer;font-family:var(--disp);font-weight:700;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center"><span>見つけたレア単語 <span class="muted small" id="rareCount"></span></span><span class="muted small">▼</span></summary><div class="rare" id="rareList" style="margin-top:10px"></div></details>
-  <div class="card"><h3 style="font-size:15px;margin-bottom:8px">リセット</h3><div class="ctrls" style="justify-content:flex-start"><button id="btnResetHist">記録・実績をリセット</button><button id="btnResetAll">デイリーも含めて全部</button></div><p class="notice" id="resetNote" style="margin:8px 0 0">このブラウザに保存された記録を消す。元には戻せない。</p></div>
 </section>
 
 <!-- LOBBY -->
@@ -82984,7 +82983,7 @@ function bestWord(cands){
 }
 
 /* ---------- input ---------- */
-let dragging=false, dragMoved=false;
+let dragging=false, dragMoved=false, tapOnLast=false;
 function tileAt(x,y,loose){
   const r=$('board').getBoundingClientRect(), cw=r.width/4, ch=r.height/4;
   const c=Math.floor((x-r.left)/cw), row=Math.floor((y-r.top)/ch);
@@ -83009,9 +83008,10 @@ bw.addEventListener('pointerdown',e=>{
   const i=tileAt(e.clientX,e.clientY,true); if(i<0) return;
   e.preventDefault(); SND.unlock(); bw.setPointerCapture(e.pointerId); dragging=true; dragMoved=false;
   const last=G.path[G.path.length-1];
-  if(G.path.length && !G.path.includes(i) && NEIGH[last].includes(i)) tryAdd(i);
-  else if(G.path.length>=2 && i===G.path[G.path.length-2]) tryAdd(i);
-  else if(!G.path.includes(i)){ G.path=[i]; updateSel(); }
+  tapOnLast=(G.path.length>0 && i===last);
+  if(tapOnLast){ /* 最後のマスから続ける（ドラッグ）か、タップで取り消し */ }
+  else if(G.path.length && !G.path.includes(i) && NEIGH[last].includes(i)) tryAdd(i);
+  else { G.path=[i]; updateSel(); SND.tap(1); }
 });
 bw.addEventListener('pointermove',e=>{
   if(!dragging) return;
@@ -83020,7 +83020,9 @@ bw.addEventListener('pointermove',e=>{
 });
 bw.addEventListener('pointerup',e=>{
   if(!dragging) return; dragging=false;
-  if(dragMoved && G.path.length>=2) submit();
+  if(dragMoved){ if(G.path.length>=2) submit(); }
+  else if(tapOnLast){ G.path.pop(); updateSel(); } // 最後のマスをもう一度タップ → 1つ戻す
+  tapOnLast=false;
 });
 bw.addEventListener('pointercancel',()=>{dragging=false});
 $('btnClear').onclick=()=>{G.path=[];updateSel()};
@@ -83261,15 +83263,7 @@ function achievements(H,all){
     ['初勝利','対戦で1位になる',(H.multiWins||0)>=1],['常勝','対戦で5回1位になる',(H.multiWins||0)>=5],
   ];
 }
-let resetArmed=null;
-function resetHistory(kind){
-  if(resetArmed!==kind){ resetArmed=kind; $('resetNote').textContent=kind==='all'?'デイリーの記録も含めて全部消える。もう一度押すと実行。':'プレイ記録・実績・レア単語が消える（デイリーのメダルは残る）。もう一度押すと実行。'; return; }
-  resetArmed=null; $('resetNote').textContent='リセットした。';
-  try{ localStorage.removeItem('kt_hist'); if(kind==='all') localStorage.removeItem('kt_daily'); }catch(e){}
-  renderHistory();
-}
-$('btnResetHist').onclick=()=>resetHistory('hist');
-$('btnResetAll').onclick=()=>resetHistory('all');
+
 function renderHistory(){
   const H=Object.assign(histDefault(),load('kt_hist',{})), all=dailyAll();
   const dv=Object.values(all);
