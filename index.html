@@ -226,7 +226,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
       <li>10秒に5回つづけて辞書にない言葉を出すと、2秒間なぞれなくなる。</li>
     </ul>
   </details>
-  <div class="homebtns"><button id="btnSettings">設定</button><button id="btnHistory">履歴・実績</button></div>
+  <div class="homebtns"><button id="btnSettings">設定</button><button id="btnHistory">履歴・実績</button><button id="btnDict">みんなの辞書</button></div>
 </section>
 
 <!-- DAILY -->
@@ -253,7 +253,22 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
   </div>
 </section>
 
-<!-- ADMIN（みんなの辞書の承認。URL末尾に #admin） -->
+<!-- DICT（みんなの辞書：申請と採用語一覧） -->
+<section class="view" id="vDict" hidden>
+  <div class="card">
+    <h2 style="font-size:18px;margin-bottom:4px">みんなの辞書</h2>
+    <p class="notice" style="margin:0 0 10px">辞書にない言葉を申請できる。管理人が採用すると全員の辞書に入り、ゲーム中に通るようになる（★1相当）。</p>
+    <div class="row" style="margin-bottom:6px"><input type="text" id="dpWord" maxlength="7" placeholder="ひらがなで（2〜7文字）"></div>
+    <div class="row" style="margin-bottom:6px"><input type="text" id="dpKanji" maxlength="20" placeholder="表記（漢字・カタカナなど）"></div>
+    <div class="row" style="margin-bottom:6px"><input type="text" id="dpNote" maxlength="60" placeholder="ひとこと（どういう言葉か）"></div>
+    <div class="row" style="margin-bottom:8px"><input type="text" id="dpBy" maxlength="12" placeholder="なまえ"></div>
+    <div class="row"><button class="primary" id="dpSend">申請する</button><span class="small" id="dpMsg"></span></div>
+  </div>
+  <details class="card" open><summary style="cursor:pointer;font-family:var(--disp);font-weight:700;font-size:15px;list-style:none;display:flex;justify-content:space-between"><span>採用された言葉 <span class="muted small" id="dpCount"></span></span><span class="muted small">▼</span></summary><div class="found" id="dpExtra" style="margin-top:10px"></div></details>
+  <div class="ctrls"><button class="ghost small" id="btnDictAdmin">管理（合言葉が必要）</button></div>
+</section>
+
+<!-- ADMIN（みんなの辞書の承認。URL末尾に #admin でも開ける） -->
 <section class="view" id="vAdmin" hidden>
   <div class="card" id="adminGate"><h2 style="font-size:18px;margin-bottom:8px">みんなの辞書 管理</h2><div class="row"><input type="password" id="adminPass" placeholder="管理の合言葉"><button class="primary" id="adminGo">開く</button></div><p class="err" id="adminMsg" style="margin:8px 0 0"></p></div>
   <div id="adminBody" hidden class="view">
@@ -82944,7 +82959,7 @@ function dailyDone(){ return dailyAll()[todayKey()]||null; }
 const LAUNCH='2026-11-04';
 
 /* ---------- views ---------- */
-const VIEWS=['vHome','vLobby','vGame','vResult','vDaily','vSettings','vHistory'];
+const VIEWS=['vHome','vLobby','vGame','vResult','vDaily','vSettings','vHistory','vDict','vAdmin'];
 function show(v){ for(const id of VIEWS) $(id).hidden=(id!==v); $('btnHome').hidden=(v==='vHome'||v==='vGame'); window.scrollTo(0,0); }
 
 /* ---------- board render ---------- */
@@ -83393,7 +83408,8 @@ const DICTX=(function(){
   function renderRejected(){
     const box=$('resReject'); if(!box) return;
     const list=G.rejected.filter(w=>!DICT.has(w));
-    if(!list.length||!MP.db()){ box.hidden=true; return; }
+    if(!list.length){ box.hidden=true; return; }
+    if(!MP.db()){ box.hidden=false; box.innerHTML='<div class="small muted">辞書になかった言葉：'+list.join('・')+'<br>（通信の準備ができていないので今は申請できない。ホームの「みんなの辞書」から後で申請できる）</div>'; return; }
     box.hidden=false;
     box.innerHTML=`<div class="small muted" style="margin-bottom:6px">辞書になかった言葉（本当に言葉なら申請できる。採用されたらみんなの辞書に入る）</div><div class="found">${list.map(w=>`<button class="fw" data-w="${w}"><b>${w}</b><i>申請</i></button>`).join('')}</div><div id="propForm" hidden style="margin-top:10px"></div>`;
     box.querySelectorAll('button[data-w]').forEach(b=>b.onclick=()=>openForm(b.dataset.w));
@@ -83444,6 +83460,28 @@ const DICTX=(function(){
     $('adminExtra').querySelectorAll('.adDel').forEach(b=>b.onclick=async()=>{ const w=b.closest('[data-w]').dataset.w; try{ await db.doc('extra/'+w).set({ok:false,at:Date.now()}); b.closest('[data-w]').remove(); }catch(e){} });
   }
   $('btnAdminBack').onclick=()=>{ show('vHome'); refreshHome(); };
+  // みんなの辞書ページ
+  async function openDict(){
+    show('vDict'); try{ $('dpBy').value=localStorage.getItem('kt_nick')||''; }catch(e){}
+    $('dpMsg').textContent=''; $('dpExtra').innerHTML='<span class="muted small">読み込み中…</span>';
+    await MP.ready(); const db=MP.db();
+    if(!db){ $('dpExtra').innerHTML='<span class="muted small">通信の準備ができていない（ページを読み込み直してみて）</span>'; $('dpSend').disabled=true; return; }
+    $('dpSend').disabled=false;
+    const extra=await dbAll('extra'); const ex=Object.entries(extra||{}).filter(([w,v])=>v&&v.ok!==false).sort((a,b)=>(b[1].at||0)-(a[1].at||0));
+    $('dpCount').textContent=ex.length?`${ex.length}語`:''; 
+    $('dpExtra').innerHTML=ex.length?ex.map(([w,v])=>`<span class="fw"><b>${MP.esc(w)}</b><i>${MP.esc(v.d||'')}</i><i>by ${MP.esc(v.by||'')}</i></span>`).join(''):'<span class="muted small">まだない。最初の1語を申請しよう</span>';
+  }
+  $('dpSend').onclick=async()=>{
+    const w=$('dpWord').value.trim(), d=$('dpKanji').value.trim(), note=$('dpNote').value.trim(), by=$('dpBy').value.trim()||'名無し';
+    if(!/^[ぁ-ん]{2,7}$/.test(w)){ $('dpMsg').textContent='ひらがな2〜7文字で'; return; }
+    if(DICT.has(w)){ $('dpMsg').textContent='その言葉はもう辞書にある'; return; }
+    const db=MP.db(); if(!db) return; $('dpSend').disabled=true;
+    try{ const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); await db.doc('proposals/'+id).set({w,d,note,by,t:Date.now(),status:'pending'}); $('dpMsg').textContent='送った！採用をお待ちください'; $('dpWord').value=''; $('dpKanji').value=''; $('dpNote').value=''; try{ localStorage.setItem('kt_nick',by); }catch(e){} }
+    catch(e){ $('dpMsg').textContent='送れなかった：'+(e&&e.code||e); }
+    $('dpSend').disabled=false;
+  };
+  $('btnDict').onclick=openDict;
+  $('btnDictAdmin').onclick=openAdmin;
   if(location.hash==='#admin') openAdmin();
   window.addEventListener('hashchange',()=>{ if(location.hash==='#admin') openAdmin(); });
   loadExtra();
