@@ -104,8 +104,12 @@ input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px 
 .tile.flash-ok{animation:ok .45s}
 .tile.flash-bad{animation:bad .35s}
 .tile.flash-dup{animation:dup .45s}
-.tile.hint{box-shadow:0 0 0 3px var(--gold);animation:hint 1.2s ease-in-out infinite}
-@keyframes hint{0%,100%{box-shadow:0 0 0 3px var(--gold)}50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--gold) 35%,transparent)}}
+.tile.hint{background:var(--gold-soft);color:var(--gold);border-color:var(--gold);animation:hint 1.2s ease-in-out infinite}
+:root[data-shape="hex"] .tile.hint{outline-color:var(--gold)}
+@keyframes hint{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.tile .hn{position:absolute;top:6px;left:8px;font-size:12px;font-weight:900;color:var(--tile-sel-fg);background:var(--gold);border-radius:999px;width:20px;height:20px;display:grid;place-items:center;line-height:1}
+.lines path.guide{stroke:var(--gold);stroke-width:3;stroke-dasharray:3 3;opacity:.9}
+.lines .guide-dot{fill:var(--gold)}
 .mission .txt b{color:var(--ink)}
 @keyframes dup{0%{background:var(--warn);color:#1d2433}100%{}}
 @keyframes ok{0%{background:var(--ok);color:#fff}100%{}}
@@ -82836,7 +82840,7 @@ const SKINS=[
   {id:'default',name:'標準',sw:['#2f4b8a','#eef1f5','#ffffff','#dde5f7'],unlock:null},
   {id:'washi',name:'和紙',sw:['#8a3b2b','#efe6d2','#fbf6ea','#f1e7c6'],unlock:'五文字'},
   {id:'chalk',name:'黒板',sw:['#ffe08a','#1f3a2f','#2a4c3f','#36584b'],unlock:'常連'},
-  {id:'karte',name:'カルテ',sw:['#1f7a8c','#e7eef3','#ffffff','#c9d6e0'],unlock:'保健委員'},
+  {id:'karte',name:'カルテ',sw:['#1f7a8c','#e7eef3','#ffffff','#c9d6e0'],unlock:'ミッション達成'},
   {id:'night',name:'夜空',sw:['#ffd166','#0d1326','#1c2850','#28355e'],unlock:'三日坊主卒業'},
   {id:'neon',name:'ネオン',sw:['#ff3cac','#0b0b16','#1a1a33','#2ef2ff'],unlock:'三百点'},
 ];
@@ -82954,9 +82958,9 @@ function renderBoard(){
   drawLines();
 }
 function drawLines(){
-  const svg=$('lines'); if(G.path.length<2){svg.innerHTML='';return;}
+  const svg=$('lines'); if(G.path.length<2){ if(G.mode!=='tutorial') svg.innerHTML=''; else svg.querySelectorAll('path:not(.guide)').forEach(p=>p.remove()); return;}
   const pts=G.path.map(i=>{const r=i>>2,c=i&3;return `${c*25+12.5},${r*25+12.5}`});
-  svg.innerHTML=`<path d="M${pts.join('L')}"/>`;
+  svg.querySelectorAll('path:not(.guide)').forEach(p=>p.remove()); svg.insertAdjacentHTML('beforeend',`<path d="M${pts.join('L')}"/>`);
 }
 function updateSel(){
   document.querySelectorAll('.tile').forEach(el=>el.classList.toggle('sel',G.path.includes(+el.dataset.i)));
@@ -83176,12 +83180,13 @@ const TUT=(function(){
   function render(){
     const st=STEPS[step], mb=$('mission'); mb.dataset.id='tut';
     mb.className='mission on'; mb.innerHTML=`<span class="txt">${st.text}</span>`+(st.done?'<button class="primary" id="btnTutDone" style="flex:none">本番へ</button>':'');
-    document.querySelectorAll('.tile').forEach(el=>el.classList.toggle('hint',!!st.path&&st.path.includes(+el.dataset.i)));
+    document.querySelectorAll('.tile').forEach(el=>{ const k=st.path?st.path.indexOf(+el.dataset.i):-1; el.classList.toggle('hint',k>=0); let b=el.querySelector('.hn'); if(k>=0){ if(!b){ b=document.createElement('span'); b.className='hn'; el.appendChild(b); } b.textContent=k+1; } else if(b) b.remove(); });
+    const svg=$('lines'); if(st.path&&st.path.length>1){ const pts=st.path.map(i=>`${(i&3)*25+12.5},${(i>>2)*25+12.5}`); svg.innerHTML=`<path class="guide" d="M${pts.join('L')}"/><circle class="guide-dot" r="2.2"><animateMotion dur="1.6s" repeatCount="indefinite" path="M${pts.join('L')}"/></circle>`; } else svg.innerHTML='';
     if(st.done){ $('btnTutDone').onclick=()=>{ end(); startGame('free',(Math.random()*2**32)>>>0); }; }
   }
   function onWord(w){ const st=STEPS[step]; if(st.path && canon(w)===canon(st.word)){ step++; setTimeout(render,500); } }
   function activeMission(){ const st=STEPS[step]; return st&&st.mission?MISSION:null; }
-  function end(){ G.over=true; $('btnGiveUp').textContent='終了'; document.querySelectorAll('.tile.hint').forEach(el=>el.classList.remove('hint')); }
+  function end(){ G.over=true; $('btnGiveUp').textContent='終了'; document.querySelectorAll('.tile.hint').forEach(el=>el.classList.remove('hint')); document.querySelectorAll('.hn').forEach(b=>b.remove()); $('lines').innerHTML=''; }
   return {start,onWord,activeMission,end,get active(){ return G.mode==='tutorial'&&!G.over; }};
 })();
 
@@ -83262,10 +83267,6 @@ function achievements(H,all){
     ['ミッション達成','ミッション語を5回',H.missions>=5],['ミッションマスター','ミッション語を30回',H.missions>=30],
     ['初メダル','デイリーでメダル',medals>=1],['金メダル','デイリーで🥇',gold>=1],['金5枚','デイリーで🥇を5回',gold>=5],
     ['三日坊主卒業','デイリー3日連続',best>=3],['皆勤','デイリー7日連続',best>=7],
-    ['保健委員','からだ・医学の言葉を累計10語',(H.medWords||0)>=10],['からだ博士','からだ・医学の言葉を累計50語',(H.medWords||0)>=50],
-    ['食いしん坊','食べ物の言葉を累計10語',(H.foodWords||0)>=10],['美食家','食べ物の言葉を累計50語',(H.foodWords||0)>=50],
-    ['体育会系','スポーツ・遊びの言葉を累計10語',(H.sportWords||0)>=10],['科学者','理科の言葉を累計10語',(H.sciWords||0)>=10],
-    ['帰国子女','カタカナ語を累計20語',(H.kataWords||0)>=20],
     ['ミッション職人','1ゲームでミッション語を5語',(H.maxMission||0)>=5],
     ['初勝利','対戦で1位になる',(H.multiWins||0)>=1],['常勝','対戦で5回1位になる',(H.multiWins||0)>=5],
   ];
