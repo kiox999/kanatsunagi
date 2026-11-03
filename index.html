@@ -82640,16 +82640,16 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
 わんりょく|000腕力
 わんわん|300わんわん
 </script>
-<!-- ▼ Firebase の設定（Firebase コンソール → プロジェクトの設定 → マイアプリ → ウェブアプリ の firebaseConfig を貼る）-->
+<!-- ▼ Firebase（対戦・みんなの辞書で使用） -->
 <script>
 window.KT_FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  databaseURL: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyDeVLhja2EEMxAht2RRmO1fKjBjIzrQ6H8",
+  authDomain: "crane-s-voice.firebaseapp.com",
+  databaseURL: "https://crane-s-voice-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "crane-s-voice",
+  storageBucket: "crane-s-voice.firebasestorage.app",
+  messagingSenderId: "245518258797",
+  appId: "1:245518258797:web:c5c8ab6546b3052f5a2564"
 };
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -82848,7 +82848,7 @@ function applySettings(){
 }
 $('setSkin').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b||b.disabled) return; SETTINGS.skin=b.dataset.v; applySettings(); });
 $('setShape').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b||b.disabled) return; SETTINGS.shape=b.dataset.v; applySettings(); });
-function histDefault(){ return {games:0,words:0,best:0,bestWord:null,longest:0,missions:0,rare:{},maxFound:0,medWords:0,multiWins:0,doubleMission:0,wonRounds:{}}; }
+function histDefault(){ return {games:0,words:0,best:0,bestWord:null,longest:0,missions:0,rare:{},maxFound:0,medWords:0,foodWords:0,sportWords:0,sciWords:0,kataWords:0,multiWins:0,doubleMission:0,wonRounds:{}}; }
 function unlockedNames(){ try{ return achievements(Object.assign(histDefault(),load('kt_hist',{})),dailyAll()).filter(a=>a[2]).map(a=>a[0]); }catch(e){ return []; } }
 for(const [id,key,num] of [['setSize','size',1],['setFont','font',0],['setHit','hit',1],['setSound','sound',1]]) $(id).addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; SETTINGS[key]=num?+b.dataset.v:b.dataset.v; applySettings(); });
 $('setVol').addEventListener('input',e=>{ SETTINGS.vol=+e.target.value/100; applySettings(); SND.unlock(); SND.tap(3); });
@@ -83227,7 +83227,7 @@ function recordHistory(){
     if(!H.bestWord||v.pts>H.bestWord.pts) H.bestWord={w,pts:v.pts};
     H.longest=Math.max(H.longest,w.length);
     if(v.mission) H.missions++;
-    { const e=DICT.get(w)||[]; if(e.some(x=>entryIs(x,1,MED_RE))) H.medWords++; }
+    { const e=DICT.get(w)||[]; if(e.some(x=>entryIs(x,1,MED_RE))) H.medWords++; if(e.some(x=>entryIs(x,2,FOOD_RE))) H.foodWords++; if(e.some(x=>x[1]&4)) H.sportWords++; if(e.some(x=>x[1]&8)) H.sciWords++; if(e.some(x=>x[1]&16)) H.kataWords++; }
     const t=wordTier(w);
     if(t>=2){ const e=DICT.get(w); const prev=H.rare[w]; if(!prev||v.pts>prev.pts) H.rare[w]={t,d:e[0][2],pts:v.pts,date:today}; }
   }
@@ -83252,6 +83252,9 @@ function achievements(H,all){
     ['初メダル','デイリーでメダル',medals>=1],['金メダル','デイリーで🥇',gold>=1],['金5枚','デイリーで🥇を5回',gold>=5],
     ['三日坊主卒業','デイリー3日連続',best>=3],['皆勤','デイリー7日連続',best>=7],
     ['保健委員','からだ・医学の言葉を累計10語',(H.medWords||0)>=10],['からだ博士','からだ・医学の言葉を累計50語',(H.medWords||0)>=50],
+    ['食いしん坊','食べ物の言葉を累計10語',(H.foodWords||0)>=10],['美食家','食べ物の言葉を累計50語',(H.foodWords||0)>=50],
+    ['部活動','スポーツ・遊びの言葉を累計10語',(H.sportWords||0)>=10],['理科係','理科の言葉を累計10語',(H.sciWords||0)>=10],
+    ['帰国子女','カタカナ語を累計20語',(H.kataWords||0)>=20],
     ['二刀流','1ゲームで両方のミッションを達成',(H.doubleMission||0)>=1],
     ['初勝利','対戦で1位になる',(H.multiWins||0)>=1],['常勝','対戦で5回1位になる',(H.multiWins||0)>=5],
   ];
