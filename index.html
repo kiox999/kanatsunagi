@@ -225,9 +225,14 @@ input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px 
 .lootpt small{font-size:14px}
 .loot .gcard{width:100%}
 /* ギミック表示 */
-.gyou{margin-bottom:10px}
-.gyou h4{font-family:var(--disp);font-size:13px;margin:0 0 4px;color:var(--ink);border-bottom:2px solid var(--line);padding-bottom:2px}
-.gyou h4 .muted{font-weight:500;font-size:11px}
+.gyou{margin-bottom:6px;border:2px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper)}
+.gyou>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 11px;font-family:var(--disp);font-weight:700;font-size:13.5px;color:var(--ink)}
+.gyou>summary::-webkit-details-marker{display:none}
+.gyou>summary::after{content:"＋";font-size:13px;color:var(--ink);opacity:.5;margin-left:auto}
+.gyou[open]>summary::after{content:"−"}
+.gyou>summary .muted{font-weight:500;font-size:11.5px}
+.gyou[open]>summary{border-bottom:2px solid var(--line)}
+.gyou .found{padding:9px 11px}
 .fw select.exRare{font-family:inherit;font-size:11px;padding:0 2px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--fg)}
 .gbadges{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
 .gbadge{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border:2px solid var(--bad);color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--paper));border-radius:0;line-height:1.5;white-space:nowrap}
@@ -349,7 +354,7 @@ body.quest .mission{display:none}
 .seg button.f-maru{font-family:"Zen Maru Gothic",sans-serif}.seg button.f-gothic{font-family:"M PLUS 1p",sans-serif}.seg button.f-mincho{font-family:"Zen Old Mincho",serif}.seg button.f-klee{font-family:"Klee One",cursive}
 /* history */
 details summary::-webkit-details-marker{display:none}
-details[open] summary span:last-child{transform:rotate(180deg)}
+details[open]:not(.gyou)>summary>span:last-child{transform:rotate(180deg)}
 .ach{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .ac{padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--paper);font-size:12.5px}
 .ac.got{border-color:var(--gold);background:var(--gold-soft)}
@@ -423,6 +428,7 @@ footer{opacity:.8}
 .row input{flex:1}
 .notice{font-size:13px;color:var(--muted)}
 .err{color:var(--bad);font-size:13px}
+[hidden]{display:none!important}
 .view{display:flex;flex-direction:column;gap:14px}
 footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;padding-top:8px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -507,7 +513,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
     <div class="row" style="margin-bottom:8px"><input type="text" id="dpBy" maxlength="12" placeholder="あなたの名前（申請者として表示）"></div>
     <div class="row"><button class="primary" id="dpSend">申請する</button><span class="small" id="dpMsg"></span></div>
   </div>
-  <details class="card" open><summary style="cursor:pointer;font-family:var(--disp);font-weight:700;font-size:15px;list-style:none;display:flex;justify-content:space-between"><span>採用された言葉 <span class="muted small" id="dpCount"></span></span><span class="muted small">▼</span></summary><div id="dpExtra" style="margin-top:10px"></div></details>
+  <details class="card" open><summary style="cursor:pointer;font-family:var(--disp);font-weight:700;font-size:15px;list-style:none;display:flex;justify-content:space-between"><span>採用された言葉 <span class="muted small" id="dpCount"></span></span><span class="muted small">▼</span></summary><div class="row" style="margin-top:8px"><input type="text" id="dpFilter" placeholder="絞り込み（よみ・漢字）" style="flex:1"></div><div id="dpExtra" style="margin-top:8px"></div></details>
   <div class="ctrls"><button class="ghost small" id="btnDictAdmin">管理（管理人のみ）</button></div>
 </section>
 
@@ -517,7 +523,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
   <div id="adminBody" hidden class="view">
     <div class="card"><div class="row" style="justify-content:space-between"><h2 style="font-size:18px">申請一覧</h2><span class="small muted" id="adminCount"></span></div></div>
     <div class="view" id="adminList"></div>
-    <div class="card"><h3 style="font-size:15px;margin-bottom:8px">採用済み</h3><div id="adminExtra"></div></div>
+    <div class="card"><h3 style="font-size:15px;margin-bottom:8px">採用済み <span class="muted small" id="adCount"></span></h3><div class="row" style="margin-bottom:8px"><input type="text" id="adFilter" placeholder="絞り込み（よみ・漢字）" style="flex:1"></div><div id="adminExtra"></div></div>
   </div>
   <div class="ctrls"><button id="btnAdminBack">ホームへ</button></div>
 </section>
@@ -159221,6 +159227,13 @@ const DICTX=(function(){
   const GYOU=[['あ行','あいうえお'],['か行','かきくけこ'],['さ行','さしすせそ'],['た行','たちつてと'],['な行','なにぬねの'],['は行','はひふへほ'],['ま行','まみむめも'],['や行','やゆよ'],['ら行','らりるれろ'],['わ行','わをん']];
   const KANA_ORDER='あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん';
   function gyouOf(w){ const c=SMALL_UP[w[0]]||UNDAKU_T[w[0]]||w[0]; const g=GYOU.find(x=>x[1].includes(c)); return g?g[0]:'その他'; }
+  // 行ごとに折りたたんで描画。絞り込み文字があれば一致分だけ出して開く
+  function renderGroups(box,list,filter,itemHtml,empty){
+    const f=(filter||'').trim();
+    const hit=f?list.filter(([w,v])=>w.includes(f)||canon(w).includes(canon(f))||String(v.d||'').includes(f)):list;
+    if(!hit.length){ box.innerHTML=`<span class="muted small">${f?'見つからない':empty}</span>`; return; }
+    box.innerHTML=byGyou(hit).map(([g,li])=>`<details class="gyou"${f?' open':''}><summary><span>${g}</span><span class="muted">${li.length}語</span></summary><div class="found">${li.map(itemHtml).join('')}</div></details>`).join('');
+  }
   function byGyou(list){ // list: [w,v][] → [[行名, [w,v][]], ...]
     const m=new Map(GYOU.map(g=>[g[0],[]])); m.set('その他',[]);
     for(const e of list){ (m.get(gyouOf(e[0]))||m.get('その他')).push(e); }
@@ -159300,11 +159313,18 @@ const DICTX=(function(){
       card.querySelector('.adNo').onclick=async()=>{ try{ await db.doc('proposals/'+id).update({status:'ng'}); card.remove(); }catch(e){} };
     });
     const ex=Object.entries(extra||{}).sort((a,b)=>(b[1].at||0)-(a[1].at||0));
-    $('adminExtra').innerHTML=ex.length?byGyou(ex).map(([g,list])=>`<div class="gyou"><h4>${g} <span class="muted">${list.length}</span></h4><div class="found">${list.map(([w,v])=>`<span class="fw" data-w="${esc(w)}"><b>${esc(w)}</b><i>${esc(v.d||'')}</i><select class="exRare">${RARES.map(g=>`<option value="${g[0]}"${+g[0]===(v.t==null?autoT(w):+v.t)?' selected':''}>${g[1]}</option>`).join('')}</select><button class="ghost small adDel" style="padding:0 6px">×</button></span>`).join('')}</div></div>`).join(''):'<span class="muted small">まだない</span>';
-    $('adminExtra').querySelectorAll('.adDel').forEach(b=>b.onclick=async()=>{ const w=b.closest('[data-w]').dataset.w; try{ await db.doc('extra/'+w).set({ok:false,at:Date.now()}); b.closest('[data-w]').remove(); }catch(e){} });
-    $('adminExtra').querySelectorAll('.exRare').forEach(sel=>sel.onchange=async()=>{ const el2=sel.closest('[data-w]'), w=el2.dataset.w, t=+sel.value;
-      try{ await db.doc('extra/'+w).update({t}); const e=DICT.get(w); if(e&&e[0]&&e[0][3]) e[0][0]=t; el2.style.borderColor='var(--ok)'; setTimeout(()=>{ el2.style.borderColor=''; },800); }catch(e){ sel.style.borderColor='var(--bad)'; } });
+    adCache=ex; $('adCount').textContent=ex.length?`${ex.length}語`:''; drawAdminExtra();
   }
+  let adCache=[];
+  const adminItem=([w,v])=>`<span class="fw" data-w="${MP.esc(w)}"><b>${MP.esc(w)}</b><i>${MP.esc(v.d||'')}</i><select class="exRare">${RARES.map(g=>`<option value="${g[0]}"${+g[0]===(v.t==null?autoT(w):+v.t)?' selected':''}>${g[1]}</option>`).join('')}</select><button class="ghost small adDel" style="padding:0 6px">×</button></span>`;
+  function drawAdminExtra(){
+    renderGroups($('adminExtra'),adCache,$('adFilter').value,adminItem,'まだない');
+    const db=MP.db(); if(!db) return;
+    $('adminExtra').querySelectorAll('.adDel').forEach(b=>b.onclick=async()=>{ const w=b.closest('[data-w]').dataset.w; try{ await db.doc('extra/'+w).set({ok:false,at:Date.now()}); adCache=adCache.filter(x=>x[0]!==w); $('adCount').textContent=adCache.length?`${adCache.length}語`:''; drawAdminExtra(); }catch(e){} });
+    $('adminExtra').querySelectorAll('.exRare').forEach(sel=>sel.onchange=async()=>{ const el2=sel.closest('[data-w]'), w=el2.dataset.w, t=+sel.value;
+      try{ await db.doc('extra/'+w).update({t}); const e=DICT.get(w); if(e&&e[0]&&e[0][3]) e[0][0]=t; const row=adCache.find(x=>x[0]===w); if(row) row[1].t=t; el2.style.borderColor='var(--ok)'; setTimeout(()=>{ el2.style.borderColor=''; },800); }catch(e){ sel.style.borderColor='var(--bad)'; } });
+  }
+  $('adFilter').addEventListener('input',drawAdminExtra);
   $('btnAdminBack').onclick=()=>{ show('vHome'); refreshHome(); };
   // みんなの辞書ページ
   async function openDict(){
@@ -159315,8 +159335,12 @@ const DICTX=(function(){
     $('dpSend').disabled=false;
     const extra=await dbAll('extra'); const ex=Object.entries(extra||{}).filter(([w,v])=>v&&v.ok!==false).sort((a,b)=>(b[1].at||0)-(a[1].at||0));
     $('dpCount').textContent=ex.length?`${ex.length}語`:''; 
-    $('dpExtra').innerHTML=ex.length?byGyou(ex).map(([g,list])=>`<div class="gyou"><h4>${g} <span class="muted">${list.length}</span></h4><div class="found">${list.map(([w,v])=>`<span class="fw"><b>${MP.esc(w)}</b>${v.t==null?'':stars(+v.t)}<i>${MP.esc(v.d||'')}</i><i>by ${MP.esc(v.by||'')}</i></span>`).join('')}</div></div>`).join(''):'<span class="muted small">まだない。最初の1語を申請しよう</span>';
+    exCache=ex; drawExtra();
   }
+  let exCache=[];
+  const extraItem=([w,v])=>`<span class="fw"><b>${MP.esc(w)}</b>${v.t==null?'':stars(+v.t)}<i>${MP.esc(v.d||'')}</i><i>by ${MP.esc(v.by||'')}</i></span>`;
+  function drawExtra(){ renderGroups($('dpExtra'),exCache,$('dpFilter').value,extraItem,'まだない。最初の1語を申請しよう'); }
+  $('dpFilter').addEventListener('input',drawExtra);
   $('dpSend').onclick=async()=>{
     const w=toHira($('dpWord').value), d=$('dpKanji').value.trim(), note=$('dpNote').value.trim(), by=$('dpBy').value.trim()||'名無し';
     if(!/^[ぁ-んー]{2,9}$/.test(w)){ $('dpMsg').textContent='まず上で言葉を調べてから'; return; }
