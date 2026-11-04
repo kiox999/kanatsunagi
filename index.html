@@ -534,7 +534,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
   <div class="card" id="qResult" hidden></div>
   <div class="card">
     <div class="row" style="justify-content:space-between"><h2 style="font-size:18px">クエスト</h2><span class="small">所持 <b class="bigscore" style="font-size:22px" id="qBank">0</b> pt</span></div>
-    <p class="notice" style="margin:4px 0 0">ポイントは全モードの得点がそのまま貯まる。ガチャ 1回100pt／10連900pt（★2以上1枚確定）。30回★3以上が出なければ次で確定。被ったカードは限界突破（攻撃力+10%、最大5回）。</p>
+    <p class="notice" style="margin:4px 0 0">ポイントは全モードの得点がそのまま貯まる。ガチャ 1回100pt／10連900pt（★2以上1枚確定）。30回★3以上が出なければ次で確定。被ったカードは限界突破（攻撃力とHPが+10%、5回まで）。上限まで育ったカードが出たらポイントで返ってくる（★50／★★100／★★★250／★★★★500）。</p>
     <div class="row" style="margin-top:8px"><button class="primary" id="qGacha1">ガチャ 1回</button><button id="qGacha10">10連</button></div>
     <div class="found" id="qGachaMsg" style="margin-top:8px"></div>
   </div>
@@ -106898,7 +106898,7 @@ function achievements(H,all){
   // 連続日数
   const keys=Object.keys(all).sort(); let streak=0,best=0,prev=null;
   for(const k of keys){ const t=Date.parse(k); streak=(prev!==null&&t-prev===86400e3)?streak+1:1; best=Math.max(best,streak); prev=t; }
-  const Qd=load('kt_quest',null)||{cards:{},cleared:{},daily:{}}; const has4=Object.keys(Qd.cards||{}).some(id=>/^c(29|30)$/.test(id)); const qClears=Object.keys(Qd.cleared||{}).length; const qDaily=Object.keys(Qd.daily||{}).length;
+  const Qd=load('kt_quest',null)||{cards:{},cleared:{},daily:{}}; const has4=Object.keys(Qd.cards||{}).some(id=>/^c(29|30|31|32|33|34)$/.test(id)); const qClears=Object.keys(Qd.cleared||{}).length; const qDaily=Object.keys(Qd.daily||{}).length;
   const cw=H.cpuWins||{}; const cpuAny=Object.values(cw).reduce((a,b)=>a+b,0);
   return [
     // あそぶ
@@ -106928,7 +106928,7 @@ function achievements(H,all){
     ['対戦デビュー','みんなで対戦を遊ぶ',(H.multiGames||0)>=1],['初勝利','対戦（つよい以上のCPUか人）で1位',(H.multiWins||0)>=1],['常勝','対戦で5回1位',(H.multiWins||0)>=5],['無敗の王','対戦で20回1位',(H.multiWins||0)>=20],
     // クエスト
     ['冒険のはじまり','はじまりの森をクリア',!!(Qd.cleared||{}).d1],['洞窟探検家','ことばの洞窟をクリア',!!(Qd.cleared||{}).d2],['沼を越えて','濁音の沼をクリア',!!(Qd.cleared||{}).d3],['書庫の司書','言霊の書庫をクリア',!!(Qd.cleared||{}).d4],['氷を砕く者','氷の城をクリア',!!(Qd.cleared||{}).d5],['沈黙を破る者','静寂の神殿をクリア',!!(Qd.cleared||{}).d6],['砦を落とす者','鉄の砦をクリア',!!(Qd.cleared||{}).d7],['塔の覇者','竜の塔をクリア',!!(Qd.cleared||{}).d8],['魔王を討つ者','魔王城をクリア',!!(Qd.cleared||{}).d9],
-    ['日課の冒険者','きょうのダンジョンを5回クリア',qDaily>=5],['ガチャ初心者','ガチャを引く',(H.gacha||0)>=1],['ガチャ中毒','ガチャを50回引く',(H.gacha||0)>=50],['虹を引いた','★★★★を手に入れる',has4],
+    ['日課の冒険者','きょうのダンジョンを5回クリア',qDaily>=5],['ガチャ初心者','ガチャを引く',(H.gacha||0)>=1],['ガチャ中毒','ガチャを50回引く',(H.gacha||0)>=50],['虹を引いた','★★★★を手に入れる',has4],['六星の主','★★★★を3種あつめる',Object.keys(Qd.cards||{}).filter(id=>/^c(29|30|31|32|33|34)$/.test(id)).length>=3],
     // 辞書
     ['辞書に一石','みんなの辞書に申請する',(H.proposals||0)>=1],
   ];
@@ -107355,10 +107355,15 @@ const QUEST=(function(){
     {id:'c28',r:3,k:'影',name:'暗殺者',atk:14,hp:135,sk:{c:{maxLen:3},e:'mult',v:2.0,d:'3文字以下の言葉のダメージ2倍'}},
     {id:'c29',r:4,k:'勇',name:'勇者',atk:17,hp:160,sk:{c:{minLen:4},e:'mult',v:1.6,d:'4文字以上の言葉のダメージ1.6倍'},pv:{all:1.2,d:'すべての言葉のダメージ1.2倍'}},
     {id:'c30',r:4,k:'龍',name:'竜王の娘',atk:16,hp:155,sk:{c:{minLen:5},e:'mult',v:2.2,d:'5文字以上の言葉のダメージ2.2倍（7文字なら4倍）'}},
+    {id:'c31',r:4,k:'賢',name:'大賢者',atk:17,hp:155,sk:{c:{tier:2},e:'mult',v:2.4,d:'★★以上の言葉のダメージ2.4倍'},pv:{time:4,d:'1ターンの時間+4秒'}},
+    {id:'c32',r:4,k:'盾',name:'戦乙女',atk:16,hp:160,sk:{c:{maxLen:3},e:'mult',v:2.2,d:'3文字以下の言葉のダメージ2.2倍'},pv:{shield:20,d:'敵の攻撃を常に20%軽減'}},
+    {id:'c33',r:4,k:'癒',name:'女神',atk:16,hp:160,sk:{c:{row:'な'},e:'heal',v:12,d:'な行で始まる言葉でHP12%回復'},pv:{regen:2,d:'毎ターンHP2%回復'}},
+    {id:'c34',r:4,k:'闇',name:'闇の王',atk:18,hp:150,sk:{c:{daku:1},e:'mult',v:2.8,d:'濁点・半濁点で読む言葉のダメージ2.8倍'},pv:{all:1.25,d:'すべての言葉のダメージ1.25倍'}},
   ];
   const CARD_BY=Object.fromEntries(CARDS.map(c=>[c.id,c]));
   const RARE_NAME=['','★','★★','★★★','★★★★'];
-  const GACHA_RATE=[[1,55],[2,30],[3,12],[4,3]];
+  const GACHA_RATE=[[1,54],[2,30],[3,12],[4,4]];
+  const REFUND=[0,50,100,250,500]; // 限界突破が上限のカードが出たときの返還ポイント
   const GACHA_COST=100, GACHA10_COST=900;
   // 敵
   const ENEMY={
@@ -107596,9 +107601,9 @@ const QUEST=(function(){
       if(btn.classList.contains('opened')) return;
       btn.classList.add('shake'); SND.tap(3);
       setTimeout(()=>{ btn.classList.remove('shake'); btn.classList.add('opened'); SND.mission();
-        q=Q(); q.pity=q.pity||0; let c=pull(); if(q.pity>=29&&c.r<3) c=pullR(3); q.pity=c.r>=3?0:q.pity+1; const dup=!!q.cards[c.id]; q.cards[c.id]=(q.cards[c.id]||0)+1; saveQ(q);
+        q=Q(); q.pity=q.pity||0; let c=pull(); if(q.pity>=29&&c.r<3) c=pullR(3); q.pity=c.r>=3?0:q.pity+1; const g=takeCard(c), dup=g.dup; if(g.back) addBank(g.back); saveQ(q);
         const L=el('loot'); L.hidden=false;
-        L.innerHTML=`<div class="lootpt">+${o.reward} <small>pt</small>${o.first?'<small class="muted">（初回クリアで2倍）</small>':''}</div><div class="gcard r${c.r}" id="lootCard"><div class="gback">${RARE_NAME[c.r]}</div><div class="gfront qc r${c.r} big"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}　攻${cardAtk(c,q)} 体${cardHp(c,q)}</small><small>${c.sk.d}</small><small class="${dup?'muted':'new'}">${dup?'かぶり → 限界突破':'NEW!'}</small></div></div>`;
+        L.innerHTML=`<div class="lootpt">+${o.reward} <small>pt</small>${o.first?'<small class="muted">（初回クリアで2倍）</small>':''}</div><div class="gcard r${c.r}" id="lootCard"><div class="gback">${RARE_NAME[c.r]}</div><div class="gfront qc r${c.r} big"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}　攻${cardAtk(c,q)} 体${cardHp(c,q)}</small><small>${c.sk.d}</small><small class="${g.maxed?'back':dup?'muted':'new'}">${g.maxed?'上限 → +'+g.back+'pt':dup?'かぶり → 限界突破':'NEW!'}</small></div></div>`;
         el('chestHint').textContent='';
         setTimeout(()=>{ el('lootCard').classList.add('flip'); if(c.r>=4) SND.missionHit(); else if(c.r===3) SND.ok(20); else SND.ok(1); el('clearBack').hidden=false; },700);
       },700);
@@ -107619,22 +107624,24 @@ const QUEST=(function(){
 
   /* ---- ガチャ ---- */
   function pull(){ let x=Math.random()*100; let r=1; for(const [rr,p] of GACHA_RATE){ x-=p; if(x<=0){ r=rr; break; } } const pool=CARDS.filter(c=>c.r===r); return pool[Math.floor(Math.random()*pool.length)]; }
+  // 受け取り。限界突破が上限（6枚目）なら代わりにポイント返還
+  function takeCard(c){ const have=q.cards[c.id]||0, dup=have>0, maxed=have>=6; if(!maxed) q.cards[c.id]=have+1; return {c,dup,maxed,back:maxed?REFUND[c.r]:0}; }
   function pullR(minR){ const pool=CARDS.filter(c=>c.r>=minR); const r=pull(); return r.r>=minR?r:pool[Math.floor(Math.random()*pool.length)]; }
   function gacha(n){
     const cost=n===10?GACHA10_COST:GACHA_COST; if(bank()<cost){ el('qGachaMsg').textContent=`ポイントが足りない（${cost}pt必要）`; return; }
-    save('kt_bank',bank()-cost); q=Q(); q.pity=q.pity||0; const got=[]; { const H=Object.assign(histDefault(),load('kt_hist',{})); H.gacha=(H.gacha||0)+n; save('kt_hist',H); }
+    save('kt_bank',bank()-cost); q=Q(); q.pity=q.pity||0; const got=[]; let refund=0; { const H=Object.assign(histDefault(),load('kt_hist',{})); H.gacha=(H.gacha||0)+n; save('kt_hist',H); }
     for(let k=0;k<n;k++){
       let c=pull();
       if(q.pity>=29 && c.r<3) c=pullR(3);                 // 天井：30回★3以上が出なければ確定
       if(n===10&&k===9&&!got.some(g=>g.c.r>=2)&&c.r<2) c=pullR(2); // 10連は★2以上が1枚確定
       q.pity=c.r>=3?0:q.pity+1;
-      const dup=!!q.cards[c.id]; q.cards[c.id]=(q.cards[c.id]||0)+1; got.push({c,dup});
+      const g=takeCard(c); refund+=g.back; got.push(g);
     }
-    saveQ(q);
-    showGacha(got);
+    saveQ(q); if(refund) addBank(refund);
+    showGacha(got,refund);
   }
   // 演出：カプセルが揺れて割れ、レア度の色で光ってからカードがめくれる
-  function showGacha(got){
+  function showGacha(got,refund){
     const ov=el('gachaOverlay'); ov.hidden=false; const maxR=Math.max(...got.map(g=>g.c.r));
     ov.innerHTML=`<div class="gstage"><div class="capsule r${maxR}"><div class="cap-top"></div><div class="cap-bot"></div></div><div class="gcards" id="gCards"></div><button class="primary" id="gClose" hidden>とじる</button></div>`;
     SND.unlock(); const cap=ov.querySelector('.capsule');
@@ -107643,10 +107650,11 @@ const QUEST=(function(){
     for(let i=0;i<shakes;i++){ setTimeout(()=>{ cap.classList.remove('shake'); void cap.offsetWidth; cap.classList.add('shake'); beat(i+1); },t); t+=420; }
     setTimeout(()=>{ cap.classList.add('open'); SND.mission(); },t); t+=600;
     const grid=el('gCards');
-    got.forEach(({c,dup},i)=>{ setTimeout(()=>{ const d=document.createElement('div'); d.className=`gcard r${c.r}`; d.innerHTML=`<div class="gback">${RARE_NAME[c.r]}</div><div class="gfront qc r${c.r} big"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}　攻${cardAtk(c,q)} 体${cardHp(c,q)}</small><small>${c.sk.d}</small><small class="${dup?'muted':'new'}">${dup?'かぶり → 限界突破':'NEW!'}</small></div>`; grid.appendChild(d); requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add('flip'))); if(c.r>=4) SND.missionHit(); else if(c.r===3) SND.ok(20); else SND.ok(1); }, t+i*(got.length>1?260:0)); });
+    got.forEach((g,i)=>{ const c=g.c, dup=g.dup; setTimeout(()=>{ const d=document.createElement('div'); d.className=`gcard r${c.r}`; d.innerHTML=`<div class="gback">${RARE_NAME[c.r]}</div><div class="gfront qc r${c.r} big"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}　攻${cardAtk(c,q)} 体${cardHp(c,q)}</small><small>${c.sk.d}</small><small class="${g.maxed?'back':dup?'muted':'new'}">${g.maxed?'上限 → +'+g.back+'pt':dup?'かぶり → 限界突破':'NEW!'}</small></div>`; grid.appendChild(d); requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add('flip'))); if(c.r>=4) SND.missionHit(); else if(c.r===3) SND.ok(20); else SND.ok(1); }, t+i*(got.length>1?260:0)); });
     t+=got.length*260+600;
+    if(refund) setTimeout(()=>{ const n2=document.createElement('div'); n2.className='lootpt'; n2.style.fontSize='22px'; n2.textContent=`上限ぶんの返還 +${refund} pt`; grid.after(n2); },t);
     setTimeout(()=>{ el('gClose').hidden=false; el('gClose').onclick=()=>{ ov.hidden=true; ov.innerHTML=''; renderHome(); }; ov.onclick=e=>{ if(e.target===ov){ ov.hidden=true; ov.innerHTML=''; renderHome(); } }; },t);
-    el('qGachaMsg').innerHTML=`<span class="small muted">直近の結果：${got.map(g=>g.c.name+RARE_NAME[g.c.r]).join('、')}</span>`;
+    el('qGachaMsg').innerHTML=`<span class="small muted">直近の結果：${got.map(g=>g.c.name+RARE_NAME[g.c.r]).join('、')}${refund?`／返還 +${refund}pt`:''}</span>`;
   }
 
   /* ---- ホーム ---- */
