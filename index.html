@@ -298,6 +298,57 @@ details[open] summary span:last-child{transform:rotate(180deg)}
 .rare .d{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .homebtns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .homebtns button{border-radius:999px;border-width:2px;font-weight:700;font-size:13px}
+/* ---- ポップ化：共通パーツ ---- */
+.minilogo{display:inline-flex;gap:3px;vertical-align:middle;margin-right:8px}
+.minilogo i{display:grid;place-items:center;width:22px;height:22px;border-radius:6px;font-style:normal;font-family:var(--disp);font-weight:900;font-size:13px;color:#fff;box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.minilogo .c1{background:var(--c1);transform:rotate(-6deg)}.minilogo .c2{background:var(--c2);transform:rotate(4deg)}.minilogo .c3{background:var(--c3);transform:rotate(-3deg)}.minilogo .c4{background:var(--c4);transform:rotate(5deg)}.minilogo .c5{background:var(--c5);transform:rotate(-4deg)}
+.brandtxt{font-size:18px}
+.card,.rules,.mode.daily{border-radius:18px}
+.card{border-width:2px;border-bottom-width:4px}
+.rules{border-width:2px;border-bottom-width:4px}
+button{border-width:2px;border-bottom-width:4px;font-weight:700;transition:transform .06s,border-bottom-width .06s}
+button:active:not(:disabled){transform:translateY(2px);border-bottom-width:2px}
+button.ghost{border-width:1px;border-bottom-width:1px;font-weight:500}
+button.primary{box-shadow:none;border-bottom-color:color-mix(in srgb,var(--ink) 60%,#000)}
+button.primary:active{box-shadow:none}
+input[type=text],input[type=password]{border-width:2px;border-radius:12px}
+.tabs button{border-width:2px;border-bottom-width:3px}
+.seg button{border-width:2px;border-bottom-width:3px}
+/* ゲーム画面 */
+.status .score{color:var(--ink)}
+.status .timer{background:var(--paper);border:2px solid var(--line);border-bottom-width:4px;border-radius:999px;padding:4px 16px;font-size:20px}
+.status .timer.low{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--paper))}
+.mission{border-radius:14px}
+.mission.on{background:linear-gradient(135deg,var(--c2),var(--c1));border:0;color:#1d2433;box-shadow:0 4px 0 color-mix(in srgb,var(--c1) 60%,#000)}
+.mission.on .tag,.mission.on .x2{color:#1d2433}.mission.on .bar{background:rgba(29,36,51,.5)}
+.tile{border-width:2px;border-bottom-width:5px;border-radius:16px;box-shadow:none}
+.tile.sel{border-bottom-width:2px;transform:translateY(3px)}
+.tile.flash-ok{animation:ok .45s}
+.preview .fb.ok{background:var(--c3);color:#fff}
+.preview .fb.bad{background:color-mix(in srgb,var(--bad) 15%,transparent)}
+.fw{border-width:2px}
+.fw.m{background:linear-gradient(135deg,var(--gold-soft),color-mix(in srgb,var(--c2) 35%,var(--paper)))}
+.countdown{font-size:88px;text-shadow:0 4px 0 rgba(0,0,0,.12)}
+/* 結果 */
+.bigscore{color:var(--ink)}
+.rk{border-width:2px;border-bottom-width:4px;border-radius:14px}
+.rk.me{background:linear-gradient(135deg,var(--ink-soft),color-mix(in srgb,var(--c4) 20%,var(--paper)))}
+.rk .n{color:var(--c1)}
+.wl .row.hit .w::before{color:var(--c3)}
+.tier.t1,.tier.t2,.tier.t3{border-width:1.5px}
+/* カレンダー・設定・履歴 */
+.cal .day{border-width:2px;border-radius:10px}
+.cal .day.today{border-color:var(--c1);background:linear-gradient(135deg,color-mix(in srgb,var(--c2) 30%,var(--paper)),color-mix(in srgb,var(--c1) 25%,var(--paper)))}
+.medals b{color:var(--ink)}
+.ac{border-width:2px;border-radius:12px}
+.ac.got{background:linear-gradient(135deg,var(--gold-soft),color-mix(in srgb,var(--c2) 30%,var(--paper)));border-color:var(--gold)}
+.skin{border-width:2px;border-bottom-width:4px}
+.skin.on{box-shadow:none;border-color:var(--ink)}
+.pl{border:2px solid color-mix(in srgb,var(--ink) 30%,transparent)}
+.code{background:var(--paper);border:2px dashed var(--ink);border-radius:14px;padding:6px 0;margin:4px 0}
+.vp{border-width:2px}
+.vp.isme{background:var(--ink-soft)}
+footer{opacity:.8}
 /* lobby */
 .code{font-family:var(--disp);font-weight:900;font-size:40px;letter-spacing:.2em;color:var(--ink);text-align:center}
 .players{display:flex;flex-wrap:wrap;gap:6px}
@@ -315,7 +366,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
 </head><body>
 <div class="wrap">
 <div class="topbar" id="topbar">
-  <div class="brand">かなつなぎ<small>16マスのひらがな</small></div>
+  <div class="brand"><span class="minilogo" aria-hidden="true"><i class="c1">か</i><i class="c2">な</i><i class="c3">つ</i><i class="c4">な</i><i class="c5">ぎ</i></span><span class="brandtxt">かなつなぎ</span></div>
   <button class="ghost small" id="btnHome" hidden>ホームへ</button>
 </div>
 
@@ -357,7 +408,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
   <div class="card">
     <div class="calhead"><button class="ghost" id="calPrev">‹</button><b id="calTitle"></b><button class="ghost" id="calNext">›</button></div>
     <div class="cal" id="cal"></div>
-    <p class="notice" style="margin:10px 0 0">🥉🥈🥇 は点数でもらえる（盤面の全語合計の10%・20%・40%）。挑戦は1日1回。終わったあとは同じ盤面で練習できるけど記録は変わらない。</p>
+    <p class="notice" style="margin:10px 0 0">🥉🥈🥇 は点数でもらえる。基準は盤面の語数に応じて変わる（下に表示）。挑戦は1日1回。終わったあとは同じ盤面で練習できるけど記録は変わらない。</p>
   </div>
   <div class="card" id="dailyToday"></div>
 </section>
@@ -104158,8 +104209,8 @@ function canon(w){ return w.replace(/[ぁぃぅぇぉっゃゅょ]/g,c=>SMALL_UP
 function baseScore(w){ const small=(w.match(/[ぁぃぅぇぉっゃゅょ]/g)||[]).length, daku=DAKU_RE.test(w)?2:0; return Math.round(BASE[Math.min(w.length,8)]*MULT[wordTier(w)])+small+daku; }
 function stars(t){ return t>0?`<span class="star" title="${TIER_NAME[t]}">${'★'.repeat(t)}</span>`:''; }
 // デイリーのメダル基準：盤面の上位15語の合計を基準にする
-function boardPar(words){ return words.reduce((s,w)=>s+baseScore(w),0); } // 盤面の全語合計
-const MEDAL_PCT=[0.10,0.17,0.25];
+function boardPar(words){ return words.reduce((s,w)=>s+Math.min(6,baseScore(w)),0); } // 盤面の語の合計（1語あたり6点で頭打ち：激レアの長い語で基準が跳ねないように）
+const MEDAL_PCT=[0.12,0.20,0.30];
 function medalThresholds(par){ return MEDAL_PCT.map(p=>Math.max(5,Math.round(par*p))); }
 function medalFor(score,par){ const t=medalThresholds(par); return score>=t[2]?3:score>=t[1]?2:score>=t[0]?1:0; }
 const MEDAL=['','🥉','🥈','🥇'];
@@ -105257,7 +105308,7 @@ const QUEST=(function(){
   return {openHome,onWord,abort,addBank,bank,active:()=>!!B&&!B.over};
 })();
 
-window.KT_DEBUG={G,VS,CPU,QUEST};
+window.KT_DEBUG={G,VS,CPU,QUEST,baseScore,wordTier};
 applySettings(); $('topbar').hidden=true;
 refreshHome();
 if(!load('kt_seen',false)){ $('tutHint').hidden=false; save('kt_seen',true); }
