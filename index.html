@@ -225,6 +225,9 @@ input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px 
 .lootpt small{font-size:14px}
 .loot .gcard{width:100%}
 /* ギミック表示 */
+.gyou{margin-bottom:10px}
+.gyou h4{font-family:var(--disp);font-size:13px;margin:0 0 4px;color:var(--ink);border-bottom:2px solid var(--line);padding-bottom:2px}
+.gyou h4 .muted{font-weight:500;font-size:11px}
 .gbadges{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
 .gbadge{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border:2px solid var(--bad);color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--paper));border-radius:0;line-height:1.5;white-space:nowrap}
 .gline{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
@@ -499,7 +502,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
     <div class="row" style="margin-bottom:8px"><input type="text" id="dpBy" maxlength="12" placeholder="あなたの名前（申請者として表示）"></div>
     <div class="row"><button class="primary" id="dpSend">申請する</button><span class="small" id="dpMsg"></span></div>
   </div>
-  <details class="card" open><summary style="cursor:pointer;font-family:var(--disp);font-weight:700;font-size:15px;list-style:none;display:flex;justify-content:space-between"><span>採用された言葉 <span class="muted small" id="dpCount"></span></span><span class="muted small">▼</span></summary><div class="found" id="dpExtra" style="margin-top:10px"></div></details>
+  <details class="card" open><summary style="cursor:pointer;font-family:var(--disp);font-weight:700;font-size:15px;list-style:none;display:flex;justify-content:space-between"><span>採用された言葉 <span class="muted small" id="dpCount"></span></span><span class="muted small">▼</span></summary><div id="dpExtra" style="margin-top:10px"></div></details>
   <div class="ctrls"><button class="ghost small" id="btnDictAdmin">管理（管理人のみ）</button></div>
 </section>
 
@@ -509,7 +512,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
   <div id="adminBody" hidden class="view">
     <div class="card"><div class="row" style="justify-content:space-between"><h2 style="font-size:18px">申請一覧</h2><span class="small muted" id="adminCount"></span></div></div>
     <div class="view" id="adminList"></div>
-    <div class="card"><h3 style="font-size:15px;margin-bottom:8px">採用済み</h3><div class="found" id="adminExtra"></div></div>
+    <div class="card"><h3 style="font-size:15px;margin-bottom:8px">採用済み</h3><div id="adminExtra"></div></div>
   </div>
   <div class="ctrls"><button id="btnAdminBack">ホームへ</button></div>
 </section>
@@ -107164,6 +107167,16 @@ const MP=(function(){
 /* ---------- みんなの辞書（申請・承認・読み込み） ---------- */
 const DICTX=(function(){
   const RARES=[['0','星なし'],['1','★ やや'],['2','★★ レア'],['3','★★★ 激レア']];
+  // 行ごとにまとめる
+  const GYOU=[['あ行','あいうえお'],['か行','かきくけこ'],['さ行','さしすせそ'],['た行','たちつてと'],['な行','なにぬねの'],['は行','はひふへほ'],['ま行','まみむめも'],['や行','やゆよ'],['ら行','らりるれろ'],['わ行','わをん']];
+  const KANA_ORDER='あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん';
+  function gyouOf(w){ const c=SMALL_UP[w[0]]||UNDAKU_T[w[0]]||w[0]; const g=GYOU.find(x=>x[1].includes(c)); return g?g[0]:'その他'; }
+  function byGyou(list){ // list: [w,v][] → [[行名, [w,v][]], ...]
+    const m=new Map(GYOU.map(g=>[g[0],[]])); m.set('その他',[]);
+    for(const e of list){ (m.get(gyouOf(e[0]))||m.get('その他')).push(e); }
+    for(const [,v] of m) v.sort((a,b)=>{ const ka=canon(a[0]),kb=canon(b[0]); for(let i=0;i<Math.max(ka.length,kb.length);i++){ const x=KANA_ORDER.indexOf(ka[i]||''),y=KANA_ORDER.indexOf(kb[i]||''); if(x!==y) return x-y; } return 0; });
+    return [...m.entries()].filter(([,v])=>v.length);
+  }
   const RARE_GUIDE='星なし＝誰でも知っている／★ やや＝知ってはいるがすぐ出ない／★★ レア＝知る人ぞ知る／★★★ 激レア＝専門的・マニアック。3文字以下はどれを選んでも星なし扱い。';
   function scoreAt(w,t){ const sm=(w.match(/[っゃゅょ]/g)||[]).length, ti=(w.match(/[ぁぃぅぇぉ]/g)||[]).length*3, ba=(w.match(/ー/g)||[]).length, dk=DAKU_RE.test(w)?2:0; return Math.round(BASE[Math.min(w.length,8)]*MULT[w.length<=3?0:t])+sm+ti+ba+dk; }
   // 管理用の合言葉（SHA-256）。変えるときは下のハッシュを差し替える。
@@ -107235,7 +107248,7 @@ const DICTX=(function(){
       card.querySelector('.adNo').onclick=async()=>{ try{ await db.doc('proposals/'+id).update({status:'ng'}); card.remove(); }catch(e){} };
     });
     const ex=Object.entries(extra||{}).sort((a,b)=>(b[1].at||0)-(a[1].at||0));
-    $('adminExtra').innerHTML=ex.length?ex.map(([w,v])=>`<span class="fw" data-w="${esc(w)}"><b>${esc(w)}</b><i>${esc(v.d||'')}</i><i>${v.t==null?'★':'★'.repeat(+v.t)||'星なし'}</i><button class="ghost small adDel" style="padding:0 6px">×</button></span>`).join(''):'<span class="muted small">まだない</span>';
+    $('adminExtra').innerHTML=ex.length?byGyou(ex).map(([g,list])=>`<div class="gyou"><h4>${g} <span class="muted">${list.length}</span></h4><div class="found">${list.map(([w,v])=>`<span class="fw" data-w="${esc(w)}"><b>${esc(w)}</b><i>${esc(v.d||'')}</i><i>${v.t==null?'★':'★'.repeat(+v.t)||'星なし'}</i><button class="ghost small adDel" style="padding:0 6px">×</button></span>`).join('')}</div></div>`).join(''):'<span class="muted small">まだない</span>';
     $('adminExtra').querySelectorAll('.adDel').forEach(b=>b.onclick=async()=>{ const w=b.closest('[data-w]').dataset.w; try{ await db.doc('extra/'+w).set({ok:false,at:Date.now()}); b.closest('[data-w]').remove(); }catch(e){} });
   }
   $('btnAdminBack').onclick=()=>{ show('vHome'); refreshHome(); };
@@ -107248,7 +107261,7 @@ const DICTX=(function(){
     $('dpSend').disabled=false;
     const extra=await dbAll('extra'); const ex=Object.entries(extra||{}).filter(([w,v])=>v&&v.ok!==false).sort((a,b)=>(b[1].at||0)-(a[1].at||0));
     $('dpCount').textContent=ex.length?`${ex.length}語`:''; 
-    $('dpExtra').innerHTML=ex.length?ex.map(([w,v])=>`<span class="fw"><b>${MP.esc(w)}</b><i>${MP.esc(v.d||'')}</i><i>by ${MP.esc(v.by||'')}</i></span>`).join(''):'<span class="muted small">まだない。最初の1語を申請しよう</span>';
+    $('dpExtra').innerHTML=ex.length?byGyou(ex).map(([g,list])=>`<div class="gyou"><h4>${g} <span class="muted">${list.length}</span></h4><div class="found">${list.map(([w,v])=>`<span class="fw"><b>${MP.esc(w)}</b>${v.t==null?'':stars(+v.t)}<i>${MP.esc(v.d||'')}</i><i>by ${MP.esc(v.by||'')}</i></span>`).join('')}</div></div>`).join(''):'<span class="muted small">まだない。最初の1語を申請しよう</span>';
   }
   $('dpSend').onclick=async()=>{
     const w=toHira($('dpWord').value), d=$('dpKanji').value.trim(), note=$('dpNote').value.trim(), by=$('dpBy').value.trim()||'名無し';
