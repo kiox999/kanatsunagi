@@ -123,6 +123,38 @@ input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px 
 .vlog{display:grid;gap:3px;font-size:12.5px;color:var(--muted)}
 .vl b{color:var(--fg)}.vl i{font-style:normal;font-variant-numeric:tabular-nums}
 .fw.stolen{opacity:.5;text-decoration:line-through}
+/* クエスト */
+.tile.stone{background:color-mix(in srgb,var(--muted) 35%,var(--tile));color:var(--muted);border-style:dotted}
+.qpanel{display:grid;gap:8px}
+.bar{height:10px;border-radius:5px;background:color-mix(in srgb,var(--line) 70%,transparent);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:5px;transition:width .3s}
+.bar.hp i{background:var(--bad)}.bar.php i{background:var(--ok)}.bar.time i{background:var(--ink);transition:width .1s linear}.bar.time i.low{background:var(--bad)}
+.qenemy{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:var(--paper);border:1px solid var(--line)}
+.qenemy.attack{animation:bad .4s;border-color:var(--bad)}
+.qem{font-size:38px;line-height:1}
+.qinfo{display:grid;gap:4px;min-width:0}
+.qcnt{text-align:center;line-height:1.1}.qcnt b{font-family:var(--disp);font-size:24px;display:block}.qcnt.soon b{color:var(--bad)}
+.qparty{display:grid;gap:5px;padding:8px 12px;border-radius:14px;background:var(--paper);border:1px solid var(--line)}
+.qcards{display:flex;gap:6px;flex-wrap:wrap}
+.qc{display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 4px;border-radius:999px;border:1px solid var(--line);font-size:12.5px;background:var(--paper);color:var(--fg);text-align:left}
+.qc b{font-family:var(--disp);width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--ink-soft);color:var(--ink);flex:none}
+.qc.r2 b{background:#dfeee4;color:#2e7d4f}.qc.r3 b{background:#e8dff8;color:#6a3db8}.qc.r4 b{background:var(--gold-soft);color:var(--gold)}
+.qc.r3{border-color:#9b5de5}.qc.r4{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.qc.big{display:grid;grid-template-columns:28px 1fr;grid-auto-rows:auto;gap:0 8px;border-radius:12px;padding:8px 10px;align-items:center}
+.qc.big b{grid-row:span 3;width:28px;height:28px}
+.qc.big small{display:block;color:var(--muted);font-size:11px;line-height:1.3}
+.qc.inparty{outline:2px solid var(--ink)}
+.qc.lock{opacity:.45}
+.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px}
+.qslot{background:none;border:0;padding:0;text-align:left;display:block;width:100%;margin-bottom:6px}
+.qslot .qc{width:100%}
+.qtime{display:grid;gap:3px}
+.qfloat{min-height:22px;text-align:center;font-family:var(--disp);font-weight:900;font-size:18px;opacity:0}
+.qfloat.show{animation:qf 1.4s forwards}
+@keyframes qf{0%{opacity:0;transform:translateY(6px)}15%{opacity:1;transform:translateY(0)}80%{opacity:1}100%{opacity:0}}
+.qfloat .dmg{color:var(--bad)}.qfloat .hurt{color:var(--bad)}.qfloat .ok{color:var(--ok)}.qfloat .muted{color:var(--muted)}
+.qfloat small{display:block;font-family:var(--body);font-weight:500;font-size:11.5px;color:var(--muted)}
+.qd{align-items:flex-start}.qd .chip{margin-left:6px;font-size:11px}
 .tile.hint{background:var(--gold-soft);color:var(--gold);border-color:var(--gold);animation:hint 1.2s ease-in-out infinite}
 :root[data-shape="hex"] .tile.hint{outline-color:var(--gold)}
 @keyframes hint{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
@@ -232,6 +264,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
     <button class="mode" id="mDaily"><span class="ico">日</span><div><b>きょうの16マス</b><span id="dailyInfo">毎日0時に盤面が変わる。1日1回、120秒。メダルを集めよう。</span></div></button>
     <button class="mode" id="mFree"><span class="ico">∞</span><div><b>フリー</b><span>ランダムな盤面で何度でも。</span></div></button>
     <button class="mode" id="mFall"><span class="ico">↓</span><div><b>落ちもの</b><span>使ったマスが消えて新しい字が落ちてくる。コンボを狙え。</span></div></button>
+    <button class="mode" id="mQuest"><span class="ico">剣</span><div><b>クエスト</b><span>落ちものRPG。ためたポイントでカードを引き、ダンジョンへ。</span></div></button>
     <button class="mode" id="mCpu"><span class="ico">CPU</span><div><b>CPUと対戦</b><span>かんたん〜おに。早い者勝ち・陣取りルールも。</span></div></button>
     <button class="mode" id="mTut"><span class="ico">？</span><div><b>あそびかたを練習</b><span>1分で覚えるチュートリアル。</span></div></button>
     <button class="mode" id="mMulti"><span class="ico">対</span><div><b>みんなで対戦</b><span id="multiInfo">同じ盤面で同時スタート。合言葉で集合。</span></div></button>
@@ -246,6 +279,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
       <li><b>ミッション</b>は最初の60秒だけ。「○を含む」「4文字以上」など文字の条件で、満たす言葉は得点が<b>2倍</b>。</li>
       <li>10秒に5回つづけて辞書にない言葉を出すと、2秒間なぞれなくなる。</li>
       <li><b>落ちもの</b>：使ったマスが消えて上から新しい字が落ちてくる。4秒以内に続けて決めるとコンボ（+1〜+5）。</li>
+      <li><b>クエスト</b>：落ちもの盤面で戦うターン制RPG。全モードの得点がポイントとして貯まり、ガチャでカードを引く。カードの技は「か行で始まる」「4文字以上」など言葉の条件で発動。</li>
       <li><b>対戦ルール</b>：ふつう（各自の合計点）／早い者勝ち（同じ言葉は先に出した人だけ得点）／陣取り（出した言葉のマスが自分の色に。マスの数で勝負）。CPU対戦でもみんなで対戦でも選べる。</li>
     </ul>
   </details>
@@ -309,6 +343,20 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
   <details class="card" open><summary style="cursor:pointer;font-family:var(--disp);font-weight:700;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center"><span>見つけたレア単語 <span class="muted small" id="rareCount"></span></span><span class="muted small">▼</span></summary><div class="rare" id="rareList" style="margin-top:10px"></div></details>
 </section>
 
+<!-- QUEST HOME -->
+<section class="view" id="vQuest" hidden>
+  <div class="card" id="qResult" hidden></div>
+  <div class="card">
+    <div class="row" style="justify-content:space-between"><h2 style="font-size:18px">クエスト</h2><span class="small">所持 <b class="bigscore" style="font-size:22px" id="qBank">0</b> pt</span></div>
+    <p class="notice" style="margin:4px 0 0">ポイントは全モードの得点がそのまま貯まる。ガチャ 1回100pt／10連900pt。被ったカードは限界突破（攻撃力+10%、最大5回）。</p>
+    <div class="row" style="margin-top:8px"><button class="primary" id="qGacha1">ガチャ 1回</button><button id="qGacha10">10連</button></div>
+    <div class="found" id="qGachaMsg" style="margin-top:8px"></div>
+  </div>
+  <div class="card"><h3 style="font-size:15px;margin-bottom:8px">パーティ（タップで入れ替え）</h3><div id="qParty2"></div><div id="qPick" hidden style="margin-top:10px"></div></div>
+  <div class="card"><h3 style="font-size:15px;margin-bottom:8px">ダンジョン</h3><p class="notice" style="margin:0 0 8px">ターン制。1ターンの制限時間内に言葉を1つ作って攻撃。言葉の点数×パーティの攻撃力がダメージ。敵は「攻撃まで」が0になると殴ってくる。</p><div class="modes" id="qDungeons"></div></div>
+  <details class="card" id="qColl"></details>
+</section>
+
 <!-- CPU SETUP -->
 <section class="view" id="vCpu" hidden>
   <div class="card set">
@@ -346,13 +394,19 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
 
 <!-- GAME -->
 <section class="view" id="vGame" hidden>
-  <div class="status">
+  <div class="status" id="statusBar">
     <div><span class="score" id="score">0<small>点</small></span></div>
     <div class="timer" id="timer">2:00</div>
     <div class="right small muted" id="modeLabel">フリー</div>
   </div>
   <div class="card" id="tutBox" hidden style="padding:10px 14px;border-color:var(--ink);background:var(--ink-soft)"></div>
   <div class="mission" id="mission"><span class="txt muted">ミッションは最初の60秒。満たす言葉は2倍。</span></div>
+  <div id="questPanel" hidden class="qpanel">
+    <div class="qenemy" id="qEnemy"></div>
+    <div class="qfloat" id="qFloat"></div>
+    <div class="qparty" id="qParty"></div>
+    <div class="qtime"><div class="bar time"><i id="qTimeBar"></i></div><small class="muted" id="qTimeTxt"></small></div>
+  </div>
   <div class="preview" id="preview">　</div>
   <div class="boardwrap" id="boardwrap">
     <div class="board" id="board"></div>
@@ -82790,7 +82844,7 @@ function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a
 function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 
 /* ---------- board ---------- */
-function tileChars(t){ const a=[t.base]; if(t.alts) a.push(...t.alts); if(SMALL[t.base]) a.push(SMALL[t.base]); return a; }
+function tileChars(t){ if(t.stone) return []; const a=[t.base]; if(t.alts) a.push(...t.alts); if(SMALL[t.base]) a.push(SMALL[t.base]); return a; }
 const NEIGH = []; for(let i=0;i<16;i++){const r=i>>2,c=i&3,a=[];for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(!dr&&!dc)continue;const rr=r+dr,cc=c+dc;if(rr>=0&&rr<4&&cc>=0&&cc<4)a.push(rr*4+cc)}NEIGH.push(a)}
 
 function makeTiles(rand){
@@ -82999,7 +83053,7 @@ function dailyDone(){ return dailyAll()[todayKey()]||null; }
 const LAUNCH='2026-11-04';
 
 /* ---------- views ---------- */
-const VIEWS=['vHome','vLobby','vGame','vResult','vDaily','vSettings','vHistory','vDict','vAdmin','vCpu'];
+const VIEWS=['vHome','vLobby','vGame','vResult','vDaily','vSettings','vHistory','vDict','vAdmin','vCpu','vQuest'];
 function show(v){ for(const id of VIEWS) $(id).hidden=(id!==v); $('btnHome').hidden=(v==='vHome'||v==='vGame'); window.scrollTo(0,0); }
 
 /* ---------- board render ---------- */
@@ -83009,6 +83063,7 @@ function renderBoard(dists){
     const d=document.createElement('div'); d.className='tile'; d.dataset.i=i; d.tabIndex=0;
     d.innerHTML=`<span>${t.base}</span>`+(t.alts?`<span class="alt">${t.alts.join('')}</span>`:'');
     if(dists&&dists[i]>0){ d.style.setProperty('--d',dists[i]); d.classList.add('fall'); }
+    if(t.stone) d.classList.add('stone');
     b.appendChild(d);
   });
   drawLines(); VS.paintOwners();
@@ -83093,7 +83148,7 @@ bw.addEventListener('pointerup',e=>{
 bw.addEventListener('pointercancel',()=>{dragging=false});
 $('btnClear').onclick=()=>{G.path=[];updateSel()};
 $('btnSubmit').onclick=()=>{ if(G.path.length>=2) submit(); else if(G.path.length===1) feedback('2文字以上つなげてね','dup'); };
-$('btnGiveUp').onclick=()=>{ if(G.mode==='tutorial'){ TUT.end(); show('vHome'); refreshHome(); return; } if(!G.over) endGame(); };
+$('btnGiveUp').onclick=()=>{ if(G.mode==='tutorial'){ TUT.end(); show('vHome'); refreshHome(); return; } if(G.mode==='quest'){ QUEST.abort(); return; } if(!G.over) endGame(); };
 
 function flash(cls){ const p=G.path.slice(); document.querySelectorAll('.tile').forEach(el=>{ if(p.includes(+el.dataset.i)){ el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);} }); setTimeout(()=>document.querySelectorAll('.tile.'+cls).forEach(el=>el.classList.remove(cls)),500); }
 function feedback(text,cls){ $('preview').innerHTML=`<span class="fb ${cls}">${text}</span>`; }
@@ -83118,6 +83173,7 @@ function submit(){
     $('found').prepend(chip);
     G.path=[]; updateSel(); feedback(`${best}　+${bs}点${hit?'（ミッション×2）':''}${bonus?`（${G.combo}コンボ +${bonus}）`:''}`,'ok');
     if(G.mode==='tutorial') TUT.onWord(best);
+    if(G.mode==='quest') QUEST.onWord(best,bs,path);
     if(G.rule==='fall') FALL.collapse(path);
   } else {
     const soft=dup||!!taken;
@@ -83167,7 +83223,7 @@ function startGame(mode,seed,opts){
   G.players=opts.players||[{id:'me',name:'あなた',cpu:null}]; G.claims={}; CPU.stop();
   const {tiles,words,rand}=makeBoard(seed);
   G.tiles=tiles; G.words=words; G.missions=G.rule==='fall'?[]:pickMissions(words,rand,tiles); G.par=boardPar(words); G.retry=!!opts.retry; G.cpuOpts=opts.cpuOpts||null;
-  renderBoard(); $('found').innerHTML=''; $('vsLog').innerHTML=''; $('vsLog').hidden=true; $('timer').textContent='2:00'; $('timer').classList.remove('low');
+  renderBoard(); $('found').innerHTML=''; $('found').hidden=false; $('statusBar').hidden=false; $('mission').hidden=false; $('questPanel').hidden=true; $('vsLog').innerHTML=''; $('vsLog').hidden=true; $('timer').textContent='2:00'; $('timer').classList.remove('low');
   const mb=$('mission'); mb.dataset.id=''; mb.className='mission'; mb.innerHTML=G.rule==='fall'?'<span class="txt muted">消えたマスの上から新しい字が落ちてくる。4秒以内に続けて決めるとコンボ。</span>':G.rule!=='normal'?`<span class="txt muted">${RULE_DESC[G.rule]}</span>`:'<span class="txt muted">ミッションは最初の60秒。満たす言葉は2倍。</span>';
   $('preview').textContent='　';
   const th=medalThresholds(G.par);
@@ -83190,6 +83246,7 @@ function endGame(){
   function finish(){
   if(G.mode==='daily'&&!G.retry){ const d=dailyAll(); d[todayKey()]={score:G.score,found:G.found.size,total:G.words.length,medal:medalFor(G.score,G.par)}; save('kt_daily',d); }
   recordHistory();
+  QUEST.addBank(G.rule==='race'||G.rule==='territory'?VS.scoreFor(VS.me()):G.score);
   if(G.mode==='multi') MP.submitResult();
   if(G.mode==='cpu') VS.recordCpuWin();
   showResult();
@@ -83246,7 +83303,7 @@ const TUT=(function(){
   const MISSION={id:'tut',label:'「す」で始まる言葉',test:w=>w[0]==='す'};
   function start(){
     G.mode='tutorial'; G.seed=0; G.found=new Map(); G.foundCanon=new Map(); G.score=0; G.path=[]; G.over=true; G.retry=false;
-    G.rule='normal'; G.claims={}; G.players=[{id:'me',name:'あなた',cpu:null}]; CPU.stop(); $('vsPlayers').hidden=true; $('vsLog').hidden=true;
+    G.rule='normal'; G.claims={}; G.players=[{id:'me',name:'あなた',cpu:null}]; CPU.stop(); $('vsPlayers').hidden=true; $('vsLog').hidden=true; $('statusBar').hidden=false; $('mission').hidden=false; $('found').hidden=false; $('questPanel').hidden=true;
     G.tiles=TILES.map(t=>({...t})); G.words=solve(G.tiles); G.missions=[]; G.par=boardPar(G.words); step=0;
     renderBoard(); $('found').innerHTML=''; $('score').innerHTML='0<small>点</small>'; $('timer').textContent='練習'; $('timer').classList.remove('low');
     $('preview').textContent='　'; $('modeLabel').textContent='チュートリアル'; $('btnGiveUp').hidden=false; $('btnGiveUp').textContent='やめる';
@@ -83488,7 +83545,7 @@ const FALL=(function(){
     G.tiles=tiles;
     setTimeout(()=>{ renderBoard(dists); },180);
   }
-  return {collapse};
+  return {collapse,pickKana};
 })();
 
 /* ---------- multiplayer (db) ---------- */
@@ -83684,7 +83741,253 @@ const DICTX=(function(){
   return {renderRejected,openAdmin,loadExtra};
 })();
 
-window.KT_DEBUG={G,VS,CPU};
+/* ---------- クエスト（落ちものRPG） ---------- */
+const QUEST=(function(){
+  const ROWS={か:'かきくけこがぎぐげご',さ:'さしすせそざじずぜぞ',た:'たちつてとだぢづでどっ',な:'なにぬねの',は:'はひふへほばびぶべぼぱぴぷぺぽ',ま:'まみむめも',や:'やゆよゃゅょ',ら:'らりるれろ'};
+  // カード：r=レア度, atk, hp, sk=スキル, pv=パッシブ
+  const CARDS=[
+    {id:'c01',r:1,k:'か',name:'見習い剣士',atk:10,hp:90, sk:{c:{row:'か'},e:'mult',v:1.5,d:'か行で始まる言葉のダメージ1.5倍'}},
+    {id:'c02',r:1,k:'さ',name:'村の弓使い',atk:10,hp:85, sk:{c:{row:'さ'},e:'mult',v:1.5,d:'さ行で始まる言葉のダメージ1.5倍'}},
+    {id:'c03',r:1,k:'た',name:'旅の商人',  atk:9, hp:95, sk:{c:{row:'た'},e:'mult',v:1.5,d:'た行で始まる言葉のダメージ1.5倍'}},
+    {id:'c04',r:1,k:'な',name:'薬草師',    atk:8, hp:100,sk:{c:{row:'な'},e:'heal',v:6,d:'な行で始まる言葉でHP6%回復'}},
+    {id:'c05',r:1,k:'は',name:'盾持ち',    atk:8, hp:110,sk:{c:{row:'は'},e:'shield',v:40,d:'は行で始まる言葉で次の敵の攻撃を40%軽減'}},
+    {id:'c06',r:1,k:'ま',name:'吟遊詩人',  atk:9, hp:90, sk:{c:{row:'ま'},e:'mult',v:1.5,d:'ま行で始まる言葉のダメージ1.5倍'}},
+    {id:'c07',r:1,k:'や',name:'森の狩人',  atk:10,hp:85, sk:{c:{row:'や'},e:'mult',v:1.7,d:'や・ゆ・よで始まる言葉のダメージ1.7倍'}},
+    {id:'c08',r:1,k:'ら',name:'船乗り',    atk:10,hp:90, sk:{c:{row:'ら'},e:'mult',v:1.5,d:'ら行で始まる言葉のダメージ1.5倍'}},
+    {id:'c09',r:1,k:'わ',name:'農夫',      atk:9, hp:100,sk:{c:{start:'わ'},e:'mult',v:2.2,d:'「わ」で始まる言葉のダメージ2.2倍'}},
+    {id:'c10',r:1,k:'ん',name:'見習い魔女',atk:10,hp:80, sk:{c:{has:'ん'},e:'mult',v:1.3,d:'「ん」を含む言葉のダメージ1.3倍'}},
+    {id:'c11',r:1,k:'い',name:'修道士',    atk:8, hp:105,sk:{c:{end:'い'},e:'heal',v:4,d:'「い」で終わる言葉でHP4%回復'}},
+    {id:'c12',r:1,k:'う',name:'鍛冶見習い',atk:10,hp:90, sk:{c:{end:'う'},e:'mult',v:1.3,d:'「う」で終わる言葉のダメージ1.3倍'}},
+    {id:'c13',r:2,k:'四',name:'王国騎士',  atk:14,hp:130,sk:{c:{minLen:4},e:'mult',v:1.6,d:'4文字以上の言葉のダメージ1.6倍'}},
+    {id:'c14',r:2,k:'小',name:'風の魔術師',atk:13,hp:120,sk:{c:{small:1},e:'mult',v:1.8,d:'小さい字を含む言葉のダメージ1.8倍'}},
+    {id:'c15',r:2,k:'゛',name:'雷の魔術師',atk:13,hp:120,sk:{c:{daku:1},e:'mult',v:2.0,d:'濁点・半濁点で読む言葉のダメージ2倍'}},
+    {id:'c16',r:2,k:'★',name:'古書の学者',atk:12,hp:125,sk:{c:{tier:1},e:'mult',v:1.7,d:'★以上の言葉のダメージ1.7倍'}},
+    {id:'c17',r:2,k:'短',name:'盗賊',      atk:15,hp:110,sk:{c:{maxLen:3},e:'mult',v:1.4,d:'3文字以下の言葉のダメージ1.4倍'},pv:{time:3,d:'1ターンの時間+3秒'}},
+    {id:'c18',r:2,k:'連',name:'踊り子',    atk:12,hp:120,sk:{c:{combo:2},e:'mult',v:1.6,d:'2コンボ以上でダメージ1.6倍'}},
+    {id:'c19',r:2,k:'重',name:'双子の剣士',atk:14,hp:125,sk:{c:{dup:1},e:'mult',v:2.0,d:'同じ字を2回使う言葉のダメージ2倍'}},
+    {id:'c20',r:2,k:'っ',name:'忍者',      atk:15,hp:110,sk:{c:{has:'っ'},e:'mult',v:2.0,d:'「っ」を含む言葉のダメージ2倍'}},
+    {id:'c21',r:2,k:'ん',name:'僧侶',      atk:11,hp:150,sk:{c:{end:'ん'},e:'heal',v:8,d:'「ん」で終わる言葉でHP8%回復'}},
+    {id:'c22',r:2,k:'五',name:'精霊使い',  atk:12,hp:130,sk:{c:{minLen:5},e:'heal',v:10,d:'5文字以上の言葉でHP10%回復'}},
+    {id:'c23',r:3,k:'聖',name:'聖騎士',    atk:19,hp:200,sk:{c:{minLen:4},e:'mult',v:2.0,d:'4文字以上の言葉のダメージ2倍'},pv:{shield:15,d:'敵の攻撃を常に15%軽減'}},
+    {id:'c24',r:3,k:'魔',name:'大魔導士',  atk:21,hp:170,sk:{c:{tier:2},e:'mult',v:3.0,d:'★★以上の言葉のダメージ3倍'}},
+    {id:'c25',r:3,k:'竜',name:'竜騎士',    atk:22,hp:180,sk:{c:{minLen:6},e:'mult',v:4.0,d:'6文字以上の言葉のダメージ4倍'}},
+    {id:'c26',r:3,k:'癒',name:'大司教',    atk:16,hp:220,sk:{c:{row:'な'},e:'heal',v:12,d:'な行で始まる言葉でHP12%回復'},pv:{regen:2,d:'毎ターンHP2%回復'}},
+    {id:'c27',r:3,k:'時',name:'時の魔女',  atk:18,hp:180,sk:{c:{has:'ん'},e:'mult',v:1.6,d:'「ん」を含む言葉のダメージ1.6倍'},pv:{time:6,d:'1ターンの時間+6秒'}},
+    {id:'c28',r:3,k:'影',name:'暗殺者',    atk:24,hp:150,sk:{c:{maxLen:3},e:'mult',v:2.4,d:'3文字以下の言葉のダメージ2.4倍'}},
+    {id:'c29',r:4,k:'勇',name:'勇者',      atk:28,hp:280,sk:{c:{minLen:4},e:'mult',v:2.0,d:'4文字以上の言葉のダメージ2倍'},pv:{all:1.4,d:'すべての言葉のダメージ1.4倍'}},
+    {id:'c30',r:4,k:'龍',name:'竜王の娘',  atk:30,hp:260,sk:{c:{minLen:5},e:'mult',v:3.0,d:'5文字以上の言葉のダメージ3倍（7文字なら6倍）'}},
+  ];
+  const CARD_BY=Object.fromEntries(CARDS.map(c=>[c.id,c]));
+  const RARE_NAME=['','★','★★','★★★','★★★★'];
+  const GACHA_RATE=[[1,55],[2,30],[3,12],[4,3]];
+  const GACHA_COST=100, GACHA10_COST=900;
+  // 敵
+  const ENEMY={
+    slime:{name:'スライム',em:'🟢'},bat:{name:'コウモリ',em:'🦇'},goblin:{name:'ゴブリンの長',em:'👺'},orc:{name:'オーク',em:'🐗'},mimic:{name:'ミミック',em:'📦'},
+    golem:{name:'ゴーレム',em:'🗿'},lizard:{name:'リザードマン',em:'🦎'},delf:{name:'ダークエルフ',em:'🧝'},cerb:{name:'ケルベロス',em:'🐕'},lich:{name:'リッチ',em:'💀'},
+    hydra:{name:'ヒドラ',em:'🐍'},wyvern:{name:'ワイバーン',em:'🦅'},mage:{name:'魔導兵',em:'🛡️'},dragonkin:{name:'竜人',em:'🐲'},ancient:{name:'古竜',em:'🐉'},demon:{name:'魔王',em:'😈'},
+  };
+  const GIM={noShort:'3文字以下の言葉は効かない',armor:'4文字未満の言葉はダメージ30%減',poison:'毎ターンHP3%減る',stone:'攻撃のたびにマスを1つ石にする',haste:'1ターンの時間−5秒'};
+  const DUNGEONS=[
+    {id:'d1',name:'はじまりの森',desc:'まずはここから。',reward:150,floors:[{e:'slime',hp:40,atk:8,every:3},{e:'bat',hp:60,atk:10,every:2},{e:'goblin',hp:130,atk:16,every:3,boss:1}]},
+    {id:'d2',name:'ことばの洞窟',desc:'短い言葉が通じない相手も。',reward:300,floors:[{e:'orc',hp:120,atk:18,every:3},{e:'mimic',hp:100,atk:14,every:2,g:'noShort'},{e:'golem',hp:200,atk:22,every:4,g:'armor'},{e:'lizard',hp:280,atk:26,every:3,boss:1}]},
+    {id:'d3',name:'濁音の沼',desc:'毒と石化。回復役がほしい。',reward:500,floors:[{e:'delf',hp:220,atk:28,every:3,g:'poison'},{e:'cerb',hp:260,atk:34,every:2},{e:'lich',hp:320,atk:30,every:3,g:'stone'},{e:'hydra',hp:450,atk:38,every:3,g:'haste',boss:1}]},
+    {id:'d4',name:'竜の塔',desc:'5階建て。★★★がいないと厳しい。',reward:800,floors:[{e:'wyvern',hp:320,atk:36,every:2},{e:'mage',hp:360,atk:40,every:3,g:'armor'},{e:'dragonkin',hp:420,atk:44,every:3,g:'noShort'},{e:'ancient',hp:550,atk:50,every:3,g:'stone'},{e:'demon',hp:750,atk:56,every:3,g:'haste',g2:'poison',boss:1}]},
+  ];
+  const STARTERS=['c01','c04','c05'];
+  const TURN_BASE=20;
+
+  /* ---- セーブ ---- */
+  function bank(){ return load('kt_bank',0)|0; }
+  function addBank(n){ if(n>0) save('kt_bank',bank()+Math.round(n)); }
+  function Q(){ const q=load('kt_quest',null); if(q) return q; const init={cards:{},party:STARTERS.slice(),cleared:{},daily:{}}; for(const id of STARTERS) init.cards[id]=1; save('kt_quest',init); return init; }
+  function saveQ(q){ save('kt_quest',q); }
+  function cardAtk(c,q){ const n=(q.cards[c.id]||1)-1; return Math.round(c.atk*(1+0.1*Math.min(n,5))); }
+  function partyCards(q){ return q.party.map(id=>CARD_BY[id]).filter(Boolean); }
+  function partyStats(q){ const cs=partyCards(q); return {atk:cs.reduce((s,c)=>s+cardAtk(c,q),0),hp:cs.reduce((s,c)=>s+c.hp,0),time:cs.reduce((s,c)=>s+((c.pv&&c.pv.time)||0),0),regen:cs.reduce((s,c)=>s+((c.pv&&c.pv.regen)||0),0),shield:cs.reduce((s,c)=>s+((c.pv&&c.pv.shield)||0),0),all:cs.reduce((s,c)=>s*((c.pv&&c.pv.all)||1),1)}; }
+
+  /* ---- スキル判定 ---- */
+  const UNDAKU={が:'か',ぎ:'き',ぐ:'く',げ:'け',ご:'こ',ざ:'さ',じ:'し',ず:'す',ぜ:'せ',ぞ:'そ',だ:'た',ぢ:'ち',づ:'つ',で:'て',ど:'と',ば:'は',び:'ひ',ぶ:'ふ',べ:'へ',ぼ:'ほ',ぱ:'は',ぴ:'ひ',ぷ:'ふ',ぺ:'へ',ぽ:'ほ'};
+  function cond(c,w,ctx){
+    if(c.row){ return ROWS[c.row].includes(w[0]); }
+    if(c.start) return w[0]===c.start||UNDAKU[w[0]]===c.start;
+    if(c.end) return w[w.length-1]===c.end;
+    if(c.has) return w.includes(c.has);
+    if(c.minLen) return w.length>=c.minLen;
+    if(c.maxLen) return w.length<=c.maxLen;
+    if(c.small) return SMALL_RE.test(w);
+    if(c.daku) return DAKU_RE.test(w);
+    if(c.tier) return wordTier(w)>=c.tier;
+    if(c.combo) return ctx.combo>=c.combo;
+    if(c.dup) return new Set(canon(w)).size<canon(w).length;
+    return false;
+  }
+
+  /* ---- バトル状態 ---- */
+  let B=null, turnTimer=null, q=null;
+  function el(id){ return $(id); }
+  function startDungeon(d,seed){
+    q=Q(); const st=partyStats(q);
+    B={d,floor:0,hpMax:st.hp,hp:st.hp,st,shield:0,turnTime:TURN_BASE+st.time,turns:0,dmgTotal:0,log:[],seed:seed||((Math.random()*2**32)>>>0),over:false,daily:!!d.daily};
+    // 盤面はフリーと同じ生成、落ちものルール
+    G.mode='quest'; G.rule='fall'; G.players=[{id:'me',name:'あなた',cpu:null}]; G.claims={}; CPU.stop();
+    G.found=new Map(); G.foundCanon=new Map(); G.score=0; G.misses=[]; G.lockUntil=0; G.rejected=[]; G.path=[]; G.over=true; G.combo=0; G.lastOk=0; G.maxCombo=0; G.missions=[]; G.retry=false;
+    const {tiles,words}=makeBoard(B.seed); G.tiles=tiles; G.words=words; G.par=0;
+    renderBoard(); el('found').innerHTML=''; el('found').hidden=true; el('vsLog').hidden=true; el('vsPlayers').hidden=true; el('preview').textContent='　';
+    el('statusBar').hidden=true; el('mission').hidden=true; el('questPanel').hidden=false;
+    el('btnGiveUp').hidden=false; el('btnGiveUp').textContent='逃げる';
+    show('vGame');
+    loadFloor(true);
+  }
+  function enemyOf(f){ return Object.assign({},ENEMY[f.e],f); }
+  function loadFloor(first){
+    const f=B.d.floors[B.floor]; B.e=enemyOf(f); B.ehp=f.hp; B.cnt=f.every; B.gims=[f.g,f.g2].filter(Boolean);
+    const cd=el('countdown'); cd.innerHTML=`<span style="font-size:.4em;text-align:center;line-height:1.3">${B.floor+1}階<br>${B.e.em} ${B.e.name}${f.boss?'（ボス）':''}</span>`; cd.hidden=false;
+    renderQuest();
+    setTimeout(()=>{ cd.hidden=true; cd.textContent='3'; G.over=false; nextTurn(); },first?1600:1300);
+  }
+  function turnSeconds(){ return Math.max(8,B.turnTime-(B.gims.includes('haste')?5:0)); }
+  function nextTurn(){
+    if(B.over) return;
+    B.turns++;
+    // 毒・再生・石の解除
+    if(B.gims.includes('poison')){ damagePlayer(Math.ceil(B.hpMax*0.03),'毒'); if(B.over) return; }
+    if(B.st.regen){ heal(B.st.regen); }
+    let changed=false; for(const t of G.tiles){ if(t.stone){ if(--t.stone<=0){ delete t.stone; t.base=FALL.pickKana(); changed=true; } } }
+    if(changed) renderBoard();
+    G.over=false;
+    B.turnEnd=Date.now()+turnSeconds()*1000;
+    clearInterval(turnTimer); turnTimer=setInterval(turnTick,100);
+    renderQuest();
+  }
+  function turnTick(){
+    if(B.over){ clearInterval(turnTimer); return; }
+    const rem=Math.max(0,(B.turnEnd-Date.now())/1000), tot=turnSeconds();
+    el('qTimeBar').style.width=(rem/tot*100)+'%'; el('qTimeTxt').textContent=`残り ${rem.toFixed(1)} 秒`;
+    el('qTimeBar').classList.toggle('low',rem<=5);
+    if(rem<=5&&rem>0) SND.beat(Math.ceil(rem)+5);
+    if(rem<=0){ clearInterval(turnTimer); G.path=[]; updateSel(); floatText('空振り…','muted'); endPlayerTurn(); }
+  }
+  // 言葉を作ったとき（submit から）
+  function onWord(w,pts,path){
+    if(!B||B.over) return;
+    clearInterval(turnTimer); G.over=true;
+    const ctx={combo:G.combo};
+    let mult=B.st.all, notes=[];
+    for(const c of partyCards(q)){
+      if(!c.sk||!cond(c.sk.c,w,ctx)) continue;
+      if(c.sk.e==='mult'){ let v=c.sk.v; if(c.id==='c30'&&w.length>=7) v=6; mult*=v; notes.push(`${c.name} ×${v}`); }
+      else if(c.sk.e==='heal'){ heal(c.sk.v); notes.push(`${c.name} 回復`); }
+      else if(c.sk.e==='shield'){ B.shield=Math.max(B.shield,c.sk.v); notes.push(`${c.name} 防御`); }
+    }
+    let dmg=Math.round(pts*B.st.atk/10*mult);
+    if(B.gims.includes('noShort')&&w.length<=3){ dmg=0; notes.push('短すぎて効かない'); }
+    if(B.gims.includes('armor')&&w.length<4){ dmg=Math.round(dmg*0.7); notes.push('装甲で減少'); }
+    B.ehp=Math.max(0,B.ehp-dmg); B.dmgTotal+=dmg;
+    floatText(dmg?`${dmg} ダメージ！`:'効かない…', dmg?'dmg':'muted', notes.join('・'));
+    if(dmg>0) SND.ok(Math.min(pts,20));
+    renderQuest();
+    if(B.ehp<=0){ enemyDown(); return; }
+    setTimeout(endPlayerTurn,350);
+  }
+  function endPlayerTurn(){
+    if(B.over) return; G.over=true;
+    B.cnt--;
+    if(B.cnt<=0){ setTimeout(enemyAttack,400); }
+    else { renderQuest(); nextTurn(); }
+  }
+  function enemyAttack(){
+    if(B.over) return;
+    const red=Math.min(90,B.shield+B.st.shield); const dmg=Math.max(1,Math.round(B.e.atk*(1-red/100)));
+    B.shield=0; B.cnt=B.e.every;
+    el('qEnemy').classList.add('attack'); setTimeout(()=>el('qEnemy').classList.remove('attack'),500);
+    SND.penalty();
+    damagePlayer(dmg,`${B.e.name}の攻撃`+(red?`（${red}%軽減）`:''));
+    if(B.over) return;
+    if(B.gims.includes('stone')){ const free=G.tiles.map((t,i)=>i).filter(i=>!G.tiles[i].stone); if(free.length>4){ const i=free[Math.floor(Math.random()*free.length)]; G.tiles[i]={base:'石',stone:3}; renderBoard(); } }
+    renderQuest();
+    setTimeout(nextTurn,500);
+  }
+  function damagePlayer(n,why){ B.hp=Math.max(0,B.hp-n); floatText(`−${n}`,'hurt',why); renderQuest(); if(B.hp<=0) finish(false); }
+  function heal(pct){ const n=Math.round(B.hpMax*pct/100); B.hp=Math.min(B.hpMax,B.hp+n); renderQuest(); }
+  function enemyDown(){
+    G.over=true; SND.missionHit(); floatText(`${B.e.name}を倒した！`,'ok');
+    B.floor++;
+    if(B.floor>=B.d.floors.length){ setTimeout(()=>finish(true),900); return; }
+    heal(10); // 階クリアで10%回復
+    setTimeout(()=>loadFloor(false),900);
+  }
+  function floatText(txt,cls,sub){ const f=el('qFloat'); f.innerHTML=`<span class="${cls}">${txt}</span>${sub?`<small>${sub}</small>`:''}`; f.classList.remove('show'); void f.offsetWidth; f.classList.add('show'); }
+  function renderQuest(){
+    if(!B) return;
+    const f=B.d.floors[B.floor]||B.d.floors[B.d.floors.length-1];
+    el('qEnemy').innerHTML=`<span class="qem">${B.e.em}</span><div class="qinfo"><div><b>${B.e.name}</b> <small class="muted">${B.floor+1}/${B.d.floors.length}階${f.boss?'・ボス':''}</small></div><div class="bar hp"><i style="width:${B.ehp/B.e.hp*100}%"></i></div><small class="muted">HP ${B.ehp} / ${B.e.hp}${B.gims.length?'　'+B.gims.map(g=>'⚠ '+GIM[g]).join('　'):''}</small></div><div class="qcnt${B.cnt<=1?' soon':''}"><small>攻撃まで</small><b>${B.cnt}</b></div>`;
+    el('qParty').innerHTML=`<div class="qcards">${partyCards(q).map(c=>`<span class="qc r${c.r}" title="${c.sk?c.sk.d:''}"><b>${c.k}</b>${c.name}</span>`).join('')}</div><div class="bar php"><i style="width:${B.hp/B.hpMax*100}%"></i></div><small class="muted">HP ${B.hp} / ${B.hpMax}　攻撃力 ${B.st.atk}${B.shield?'　🛡'+B.shield+'%':''}</small>`;
+  }
+  function finish(win){
+    if(B.over) return; B.over=true; G.over=true; clearInterval(turnTimer);
+    el('statusBar').hidden=false; el('mission').hidden=false; el('found').hidden=false; el('questPanel').hidden=true; el('btnGiveUp').textContent='終了';
+    let reward=0, medal=0, first=false;
+    if(win){
+      if(B.daily){ const k=todayKey(); const pct=B.hp/B.hpMax; medal=pct>=0.7?3:pct>=0.4?2:1; reward=B.d.reward; if(!q.daily[k]){ q.daily[k]={medal,hp:Math.round(pct*100),turns:B.turns}; addBank(reward); } else reward=0; }
+      else { reward=B.d.reward; first=!q.cleared[B.d.id]; if(first) reward*=2; q.cleared[B.d.id]=true; addBank(reward); }
+      saveQ(q);
+    }
+    SND[win?'end':'timeup']();
+    openHome();
+    const r=el('qResult'); r.hidden=false;
+    r.innerHTML=`<div class="small muted">${B.d.name}</div><div class="bigscore" style="font-size:30px">${win?'クリア！':'力尽きた…'}${medal?' '+MEDAL[medal]:''}</div>
+      <div class="stats"><span>到達 <b>${Math.min(B.floor+1,B.d.floors.length)}</b> / ${B.d.floors.length}階</span><span>ターン <b>${B.turns}</b></span><span>与ダメージ <b>${B.dmgTotal}</b></span><span>残りHP <b>${B.hp}</b> / ${B.hpMax}</span></div>
+      ${win?`<div style="margin-top:8px">報酬 <b>+${reward}</b> pt${first?'（初回クリアで2倍）':''}${B.daily&&!reward?'（今日の分は受け取り済み）':''}</div>`:'<div class="small muted" style="margin-top:8px">報酬なし。カードを強くするか回復役を入れてみよう。</div>'}`;
+    r.scrollIntoView({block:'nearest'});
+  }
+  function abort(){ if(!B||B.over) return; finish(false); }
+
+  /* ---- デイリー ---- */
+  function dailyDungeon(){
+    const key=todayKey(), rand=mulberry32(hashStr('quest-'+key));
+    const pool=['slime','bat','goblin','orc','mimic','golem','lizard','delf','cerb','lich','hydra','wyvern','mage','dragonkin'];
+    const gims=[null,null,'noShort','armor','poison','stone','haste'];
+    const floors=[]; const daysSince=Math.max(0,Math.round((Date.parse(key)-Date.parse(LAUNCH))/86400e3));
+    const scale=1+Math.min(1,daysSince/60)*0.5; // 2ヶ月かけて少し強く
+    for(let k=0;k<4;k++){ const e=pool[Math.floor(rand()*pool.length)]; const base=90+k*70; floors.push({e,hp:Math.round(base*scale*(0.9+rand()*0.3)),atk:Math.round((16+k*8)*scale),every:2+Math.floor(rand()*2),g:k>=1?gims[Math.floor(rand()*gims.length)]:undefined,boss:k===3?1:0}); }
+    return {id:'daily',name:`きょうのダンジョン（${key}）`,desc:'日替わり4階。残りHPでメダル。報酬は1日1回。',reward:300,floors,daily:true};
+  }
+
+  /* ---- ガチャ ---- */
+  function pull(){ let x=Math.random()*100; let r=1; for(const [rr,p] of GACHA_RATE){ x-=p; if(x<=0){ r=rr; break; } } const pool=CARDS.filter(c=>c.r===r); return pool[Math.floor(Math.random()*pool.length)]; }
+  function gacha(n){
+    const cost=n===10?GACHA10_COST:GACHA_COST; if(bank()<cost){ el('qGachaMsg').textContent=`ポイントが足りない（${cost}pt必要）`; return; }
+    save('kt_bank',bank()-cost); q=Q(); const got=[];
+    for(let k=0;k<n;k++){ const c=pull(); const dup=!!q.cards[c.id]; q.cards[c.id]=(q.cards[c.id]||0)+1; got.push({c,dup}); }
+    saveQ(q); SND.missionHit();
+    el('qGachaMsg').innerHTML=got.map(({c,dup})=>`<span class="qc r${c.r} big"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}${dup?'・限界突破+1':'・NEW'}</small></span>`).join('');
+    renderHome();
+  }
+
+  /* ---- ホーム ---- */
+  function openHome(){ q=Q(); el('qResult').hidden=true; el('qGachaMsg').textContent=''; renderHome(); show('vQuest'); }
+  let pickSlot=-1;
+  function renderHome(){
+    q=Q(); const st=partyStats(q);
+    el('qBank').textContent=bank();
+    el('qParty2').innerHTML=q.party.map((id,i)=>{ const c=CARD_BY[id]; return `<button class="qslot" data-i="${i}"><span class="qc r${c.r} big"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}　攻${cardAtk(c,q)} 体${c.hp}</small><small>${c.sk.d}${c.pv?'／'+c.pv.d:''}</small></span></button>`; }).join('')+`<div class="small muted" style="margin-top:6px">合計 攻撃力 ${st.atk}・HP ${st.hp}${st.time?'・時間+'+st.time+'秒':''}${st.regen?'・毎ターン'+st.regen+'%回復':''}${st.shield?'・常時'+st.shield+'%軽減':''}</div>`;
+    el('qPick').hidden=pickSlot<0;
+    if(pickSlot>=0){ const owned=CARDS.filter(c=>q.cards[c.id]); el('qPick').innerHTML=`<div class="small" style="margin-bottom:6px">${pickSlot+1}枠目に入れるカードを選ぶ</div><div class="qgrid">${owned.map(c=>`<button class="qc r${c.r} big${q.party.includes(c.id)?' inparty':''}" data-id="${c.id}"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}　攻${cardAtk(c,q)} 体${c.hp}${(q.cards[c.id]||1)>1?'　LB'+Math.min(5,q.cards[c.id]-1):''}</small><small>${c.sk.d}</small></button>`).join('')}</div><div class="ctrls" style="margin-top:6px"><button class="ghost small" id="qPickCancel">やめる</button></div>`; el('qPickCancel').onclick=()=>{ pickSlot=-1; renderHome(); }; }
+    const dd=dailyDungeon(); const today=q.daily[todayKey()];
+    el('qDungeons').innerHTML=[dd,...DUNGEONS].map(d=>`<button class="mode qd" data-id="${d.id}"><span class="ico">${d.daily?'日':ENEMY[d.floors[d.floors.length-1].e].em}</span><div><b>${d.name}</b>${d.daily?(today?`<span class="chip" style="color:var(--gold)">今日 ${MEDAL[today.medal]} 残HP${today.hp}%</span>`:''):(q.cleared[d.id]?'<span class="chip" style="color:var(--ok)">クリア済</span>':'')}<span>${d.desc}　${d.floors.length}階・報酬 ${d.reward}pt${!d.daily&&!q.cleared[d.id]?'（初回2倍）':''}</span><span class="muted">${d.floors.map(f=>ENEMY[f.e].em).join(' ')}</span></div></button>`).join('');
+    const ownedN=Object.keys(q.cards).length;
+    el('qColl').innerHTML=`<summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between"><span style="font-family:var(--disp);font-weight:700">カード図鑑 <span class="muted small">${ownedN} / ${CARDS.length}</span></span><span class="muted small">▼</span></summary><div class="qgrid" style="margin-top:10px">${CARDS.map(c=>q.cards[c.id]?`<span class="qc r${c.r} big"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}　攻${cardAtk(c,q)} 体${c.hp}${(q.cards[c.id]||1)>1?'　LB'+Math.min(5,q.cards[c.id]-1):''}</small><small>${c.sk.d}${c.pv?'／'+c.pv.d:''}</small></span>`:`<span class="qc lock big"><b>？</b>？？？<small>${RARE_NAME[c.r]}</small></span>`).join('')}</div>`;
+  }
+  el('qParty2').addEventListener('click',e=>{ const b=e.target.closest('.qslot'); if(!b) return; pickSlot=+b.dataset.i; renderHome(); });
+  el('qPick').addEventListener('click',e=>{ const b=e.target.closest('[data-id]'); if(!b||pickSlot<0) return; const id=b.dataset.id; q=Q(); const j=q.party.indexOf(id); if(j>=0){ [q.party[j],q.party[pickSlot]]=[q.party[pickSlot],q.party[j]]; } else q.party[pickSlot]=id; saveQ(q); pickSlot=-1; renderHome(); });
+  el('qDungeons').addEventListener('click',e=>{ const b=e.target.closest('.qd'); if(!b) return; SND.unlock(); const id=b.dataset.id; const d=id==='daily'?dailyDungeon():DUNGEONS.find(x=>x.id===id); startDungeon(d,id==='daily'?hashStr('questboard-'+todayKey()):undefined); });
+  el('qGacha1').onclick=()=>gacha(1); el('qGacha10').onclick=()=>gacha(10);
+  el('mQuest').onclick=openHome;
+  return {openHome,onWord,abort,addBank,bank,active:()=>!!B&&!B.over};
+})();
+
+window.KT_DEBUG={G,VS,CPU,QUEST};
 applySettings();
 refreshHome();
 if(!load('kt_seen',false)){ $('tutHint').hidden=false; save('kt_seen',true); }
