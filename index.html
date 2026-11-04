@@ -165,7 +165,7 @@ input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px 
 .qc.r2 b{background:#dfeee4;color:#2e7d4f}.qc.r3 b{background:#e8dff8;color:#6a3db8}.qc.r4 b{background:var(--gold-soft);color:var(--gold)}
 .qc.r3{border-color:#9b5de5}.qc.r4{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
 .qc.big{display:grid;grid-template-columns:28px 1fr;grid-auto-rows:auto;gap:0 8px;border-radius:12px;padding:8px 10px;align-items:center}
-.qc.big b{grid-row:span 3;width:28px;height:28px}
+.qc.big b{grid-row:1/span 6;width:28px;height:28px}
 .qc.big small{display:block;color:var(--muted);font-size:11px;line-height:1.3}
 .qc.inparty{outline:2px solid var(--ink)}
 .qc.lock{opacity:.45}
@@ -179,6 +179,33 @@ input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px 
 .qfloat .dmg{color:var(--bad)}.qfloat .hurt{color:var(--bad)}.qfloat .ok{color:var(--ok)}.qfloat .muted{color:var(--muted)}
 .qfloat small{display:block;font-family:var(--body);font-weight:500;font-size:11.5px;color:var(--muted)}
 .qd{align-items:flex-start}.qd .chip{margin-left:6px;font-size:11px}
+/* ガチャ演出 */
+.goverlay{position:fixed;inset:0;background:rgba(10,12,20,.94);backdrop-filter:blur(6px);z-index:50;display:grid;place-items:start center;padding:24px 16px;overflow:auto}
+.gstage{display:grid;gap:16px;justify-items:center;width:min(560px,100%)}
+.capsule{position:relative;width:110px;height:110px;margin-top:10px}
+.cap-top,.cap-bot{position:absolute;left:0;width:110px;height:55px;border:4px solid #1d2433;box-sizing:border-box}
+.cap-top{top:0;border-radius:55px 55px 0 0;background:#fff}
+.cap-bot{bottom:0;border-radius:0 0 55px 55px;background:#ffb627}
+.capsule.r2 .cap-bot{background:#3ec99f}.capsule.r3 .cap-bot{background:#b57bff}.capsule.r4 .cap-bot{background:linear-gradient(135deg,#ffd166,#ff7b54,#ff5d8f,#b57bff)}
+.capsule.shake{animation:cshake .4s}
+@keyframes cshake{0%,100%{transform:rotate(0)}25%{transform:rotate(-14deg) translateY(-6px)}75%{transform:rotate(14deg) translateY(-6px)}}
+.capsule.open .cap-top{animation:capopen .6s forwards}.capsule.open .cap-bot{animation:capdrop .6s forwards}
+@keyframes capopen{to{transform:translate(-40px,-90px) rotate(-40deg);opacity:0}}
+@keyframes capdrop{to{transform:translate(30px,60px) rotate(25deg);opacity:0}}
+.capsule.open::after{content:"";position:absolute;inset:-30px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.95),rgba(255,255,255,0) 70%);animation:flash .7s forwards}
+.capsule.r4.open::after{background:radial-gradient(circle,#fff,rgba(255,209,102,.6) 40%,rgba(255,255,255,0) 70%);inset:-80px}
+@keyframes flash{0%{opacity:0;transform:scale(.3)}30%{opacity:1}100%{opacity:0;transform:scale(1.6)}}
+.gcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;width:100%}
+.gcard{perspective:600px;position:relative}
+.gcard .gback,.gcard .gfront{backface-visibility:hidden;transition:transform .5s;border-radius:12px}
+.gcard .gback{position:absolute;inset:0;z-index:1}
+.gcard .gback{display:grid;place-items:center;background:#2a3350;color:#fff;font-family:var(--disp);font-weight:900;font-size:18px;border:3px solid #fff;transform:rotateY(0)}
+.gcard.r3 .gback{background:#6a3db8}.gcard.r4 .gback{background:linear-gradient(135deg,#ffd166,#ff7b54,#ff5d8f,#b57bff);color:#1d2433}
+.gcard .gfront{position:relative;transform:rotateY(180deg);width:100%;height:100%;background:var(--paper);box-sizing:border-box}
+.gcard.flip .gback{transform:rotateY(180deg)}.gcard.flip .gfront{transform:rotateY(0)}
+.gcard.r4.flip{animation:glow 1.2s infinite alternate}
+@keyframes glow{from{filter:drop-shadow(0 0 4px #ffd166)}to{filter:drop-shadow(0 0 16px #ff5d8f)}}
+.gfront .new{color:var(--c1);font-weight:900}
 .qslots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .qslots .qc.big{grid-template-columns:1fr;justify-items:center;text-align:center;min-height:96px;width:100%;cursor:pointer}
 .qslots .qc.big b{grid-row:auto;width:34px;height:34px;font-size:18px}
@@ -468,10 +495,11 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
 
 <!-- QUEST HOME -->
 <section class="view" id="vQuest" hidden>
+  <div id="gachaOverlay" class="goverlay" hidden></div>
   <div class="card" id="qResult" hidden></div>
   <div class="card">
     <div class="row" style="justify-content:space-between"><h2 style="font-size:18px">クエスト</h2><span class="small">所持 <b class="bigscore" style="font-size:22px" id="qBank">0</b> pt</span></div>
-    <p class="notice" style="margin:4px 0 0">ポイントは全モードの得点がそのまま貯まる。ガチャ 1回100pt／10連900pt。被ったカードは限界突破（攻撃力+10%、最大5回）。</p>
+    <p class="notice" style="margin:4px 0 0">ポイントは全モードの得点がそのまま貯まる。ガチャ 1回100pt／10連900pt（★2以上1枚確定）。30回★3以上が出なければ次で確定。被ったカードは限界突破（攻撃力+10%、最大5回）。</p>
     <div class="row" style="margin-top:8px"><button class="primary" id="qGacha1">ガチャ 1回</button><button id="qGacha10">10連</button></div>
     <div class="found" id="qGachaMsg" style="margin-top:8px"></div>
   </div>
@@ -105054,36 +105082,36 @@ const QUEST=(function(){
   const ROWS={か:'かきくけこがぎぐげご',さ:'さしすせそざじずぜぞ',た:'たちつてとだぢづでどっ',な:'なにぬねの',は:'はひふへほばびぶべぼぱぴぷぺぽ',ま:'まみむめも',や:'やゆよゃゅょ',ら:'らりるれろ'};
   // カード：r=レア度, atk, hp, sk=スキル, pv=パッシブ
   const CARDS=[
-    {id:'c01',r:1,k:'か',name:'見習い剣士',atk:10,hp:90, sk:{c:{row:'か'},e:'mult',v:1.5,d:'か行で始まる言葉のダメージ1.5倍'}},
-    {id:'c02',r:1,k:'さ',name:'村の弓使い',atk:10,hp:85, sk:{c:{row:'さ'},e:'mult',v:1.5,d:'さ行で始まる言葉のダメージ1.5倍'}},
-    {id:'c03',r:1,k:'た',name:'旅の商人',  atk:9, hp:95, sk:{c:{row:'た'},e:'mult',v:1.5,d:'た行で始まる言葉のダメージ1.5倍'}},
-    {id:'c04',r:1,k:'な',name:'薬草師',    atk:8, hp:100,sk:{c:{row:'な'},e:'heal',v:6,d:'な行で始まる言葉でHP6%回復'}},
-    {id:'c05',r:1,k:'は',name:'盾持ち',    atk:8, hp:110,sk:{c:{row:'は'},e:'shield',v:40,d:'は行で始まる言葉で次の敵の攻撃を40%軽減'}},
-    {id:'c06',r:1,k:'ま',name:'吟遊詩人',  atk:9, hp:90, sk:{c:{row:'ま'},e:'mult',v:1.5,d:'ま行で始まる言葉のダメージ1.5倍'}},
-    {id:'c07',r:1,k:'や',name:'森の狩人',  atk:10,hp:85, sk:{c:{row:'や'},e:'mult',v:1.7,d:'や・ゆ・よで始まる言葉のダメージ1.7倍'}},
-    {id:'c08',r:1,k:'ら',name:'船乗り',    atk:10,hp:90, sk:{c:{row:'ら'},e:'mult',v:1.5,d:'ら行で始まる言葉のダメージ1.5倍'}},
-    {id:'c09',r:1,k:'わ',name:'農夫',      atk:9, hp:100,sk:{c:{start:'わ'},e:'mult',v:2.2,d:'「わ」で始まる言葉のダメージ2.2倍'}},
-    {id:'c10',r:1,k:'ん',name:'見習い魔女',atk:10,hp:80, sk:{c:{has:'ん'},e:'mult',v:1.3,d:'「ん」を含む言葉のダメージ1.3倍'}},
-    {id:'c11',r:1,k:'い',name:'修道士',    atk:8, hp:105,sk:{c:{end:'い'},e:'heal',v:4,d:'「い」で終わる言葉でHP4%回復'}},
-    {id:'c12',r:1,k:'う',name:'鍛冶見習い',atk:10,hp:90, sk:{c:{end:'う'},e:'mult',v:1.3,d:'「う」で終わる言葉のダメージ1.3倍'}},
-    {id:'c13',r:2,k:'四',name:'王国騎士',  atk:14,hp:130,sk:{c:{minLen:4},e:'mult',v:1.6,d:'4文字以上の言葉のダメージ1.6倍'}},
+    {id:'c01',r:1,k:'か',name:'見習い剣士',atk:11,hp:105, sk:{c:{row:'か'},e:'mult',v:1.5,d:'か行で始まる言葉のダメージ1.5倍'}},
+    {id:'c02',r:1,k:'さ',name:'村の弓使い',atk:11,hp:115, sk:{c:{row:'さ'},e:'mult',v:1.5,d:'さ行で始まる言葉のダメージ1.5倍'}},
+    {id:'c03',r:1,k:'た',name:'旅の商人',atk:10,hp:110, sk:{c:{row:'た'},e:'mult',v:1.5,d:'た行で始まる言葉のダメージ1.5倍'}},
+    {id:'c04',r:1,k:'な',name:'薬草師',atk:12,hp:115,sk:{c:{row:'な'},e:'heal',v:6,d:'な行で始まる言葉でHP6%回復'}},
+    {id:'c05',r:1,k:'は',name:'盾持ち',atk:12,hp:110,sk:{c:{row:'は'},e:'shield',v:40,d:'は行で始まる言葉で次の敵の攻撃を40%軽減'}},
+    {id:'c06',r:1,k:'ま',name:'吟遊詩人',atk:10,hp:105, sk:{c:{row:'ま'},e:'mult',v:1.5,d:'ま行で始まる言葉のダメージ1.5倍'}},
+    {id:'c07',r:1,k:'や',name:'森の狩人',atk:11,hp:115, sk:{c:{row:'や'},e:'mult',v:1.7,d:'や・ゆ・よで始まる言葉のダメージ1.7倍'}},
+    {id:'c08',r:1,k:'ら',name:'船乗り',atk:11,hp:105, sk:{c:{row:'ら'},e:'mult',v:1.5,d:'ら行で始まる言葉のダメージ1.5倍'}},
+    {id:'c09',r:1,k:'わ',name:'農夫',atk:10,hp:115,sk:{c:{start:'わ'},e:'mult',v:2.2,d:'「わ」で始まる言葉のダメージ2.2倍'}},
+    {id:'c10',r:1,k:'ん',name:'見習い魔女',atk:11,hp:110, sk:{c:{has:'ん'},e:'mult',v:1.3,d:'「ん」を含む言葉のダメージ1.3倍'}},
+    {id:'c11',r:1,k:'い',name:'修道士',atk:12,hp:105,sk:{c:{end:'い'},e:'heal',v:4,d:'「い」で終わる言葉でHP4%回復'}},
+    {id:'c12',r:1,k:'う',name:'鍛冶見習い',atk:11,hp:105, sk:{c:{end:'う'},e:'mult',v:1.3,d:'「う」で終わる言葉のダメージ1.3倍'}},
+    {id:'c13',r:2,k:'四',name:'王国騎士',atk:14,hp:130,sk:{c:{minLen:4},e:'mult',v:1.6,d:'4文字以上の言葉のダメージ1.6倍'}},
     {id:'c14',r:2,k:'小',name:'風の魔術師',atk:13,hp:120,sk:{c:{small:1},e:'mult',v:1.8,d:'小さい字を含む言葉のダメージ1.8倍'}},
     {id:'c15',r:2,k:'゛',name:'雷の魔術師',atk:13,hp:120,sk:{c:{daku:1},e:'mult',v:2.0,d:'濁点・半濁点で読む言葉のダメージ2倍'}},
     {id:'c16',r:2,k:'★',name:'古書の学者',atk:12,hp:125,sk:{c:{tier:1},e:'mult',v:1.7,d:'★以上の言葉のダメージ1.7倍'}},
-    {id:'c17',r:2,k:'短',name:'盗賊',      atk:15,hp:110,sk:{c:{maxLen:3},e:'mult',v:1.4,d:'3文字以下の言葉のダメージ1.4倍'},pv:{time:3,d:'1ターンの時間+3秒'}},
-    {id:'c18',r:2,k:'連',name:'踊り子',    atk:12,hp:120,sk:{c:{combo:2},e:'mult',v:1.6,d:'2コンボ以上でダメージ1.6倍'}},
+    {id:'c17',r:2,k:'短',name:'盗賊',atk:12,hp:125,sk:{c:{maxLen:3},e:'mult',v:1.4,d:'3文字以下の言葉のダメージ1.4倍'},pv:{time:3,d:'1ターンの時間+3秒'}},
+    {id:'c18',r:2,k:'連',name:'踊り子',atk:12,hp:120,sk:{c:{combo:2},e:'mult',v:1.6,d:'2コンボ以上でダメージ1.6倍'}},
     {id:'c19',r:2,k:'重',name:'双子の剣士',atk:14,hp:125,sk:{c:{dup:1},e:'mult',v:2.0,d:'同じ字を2回使う言葉のダメージ2倍'}},
-    {id:'c20',r:2,k:'っ',name:'忍者',      atk:15,hp:110,sk:{c:{has:'っ'},e:'mult',v:2.0,d:'「っ」を含む言葉のダメージ2倍'}},
-    {id:'c21',r:2,k:'ん',name:'僧侶',      atk:11,hp:150,sk:{c:{end:'ん'},e:'heal',v:8,d:'「ん」で終わる言葉でHP8%回復'}},
-    {id:'c22',r:2,k:'五',name:'精霊使い',  atk:12,hp:130,sk:{c:{minLen:5},e:'heal',v:10,d:'5文字以上の言葉でHP10%回復'}},
-    {id:'c23',r:3,k:'聖',name:'聖騎士',    atk:19,hp:200,sk:{c:{minLen:4},e:'mult',v:2.0,d:'4文字以上の言葉のダメージ2倍'},pv:{shield:15,d:'敵の攻撃を常に15%軽減'}},
-    {id:'c24',r:3,k:'魔',name:'大魔導士',  atk:21,hp:170,sk:{c:{tier:2},e:'mult',v:3.0,d:'★★以上の言葉のダメージ3倍'}},
-    {id:'c25',r:3,k:'竜',name:'竜騎士',    atk:22,hp:180,sk:{c:{minLen:6},e:'mult',v:4.0,d:'6文字以上の言葉のダメージ4倍'}},
-    {id:'c26',r:3,k:'癒',name:'大司教',    atk:16,hp:220,sk:{c:{row:'な'},e:'heal',v:12,d:'な行で始まる言葉でHP12%回復'},pv:{regen:2,d:'毎ターンHP2%回復'}},
-    {id:'c27',r:3,k:'時',name:'時の魔女',  atk:18,hp:180,sk:{c:{has:'ん'},e:'mult',v:1.6,d:'「ん」を含む言葉のダメージ1.6倍'},pv:{time:6,d:'1ターンの時間+6秒'}},
-    {id:'c28',r:3,k:'影',name:'暗殺者',    atk:24,hp:150,sk:{c:{maxLen:3},e:'mult',v:2.4,d:'3文字以下の言葉のダメージ2.4倍'}},
-    {id:'c29',r:4,k:'勇',name:'勇者',      atk:28,hp:280,sk:{c:{minLen:4},e:'mult',v:2.0,d:'4文字以上の言葉のダメージ2倍'},pv:{all:1.4,d:'すべての言葉のダメージ1.4倍'}},
-    {id:'c30',r:4,k:'龍',name:'竜王の娘',  atk:30,hp:260,sk:{c:{minLen:5},e:'mult',v:3.0,d:'5文字以上の言葉のダメージ3倍（7文字なら6倍）'}},
+    {id:'c20',r:2,k:'っ',name:'忍者',atk:12,hp:125,sk:{c:{has:'っ'},e:'mult',v:2.0,d:'「っ」を含む言葉のダメージ2倍'}},
+    {id:'c21',r:2,k:'ん',name:'僧侶',atk:14,hp:120,sk:{c:{end:'ん'},e:'heal',v:8,d:'「ん」で終わる言葉でHP8%回復'}},
+    {id:'c22',r:2,k:'五',name:'精霊使い',atk:12,hp:130,sk:{c:{minLen:5},e:'heal',v:10,d:'5文字以上の言葉でHP10%回復'}},
+    {id:'c23',r:3,k:'聖',name:'聖騎士',atk:15,hp:140,sk:{c:{minLen:4},e:'mult',v:1.8,d:'4文字以上の言葉のダメージ1.8倍'},pv:{shield:15,d:'敵の攻撃を常に15%軽減'}},
+    {id:'c24',r:3,k:'魔',name:'大魔導士',atk:14,hp:140,sk:{c:{tier:2},e:'mult',v:2.2,d:'★★以上の言葉のダメージ2.2倍'}},
+    {id:'c25',r:3,k:'竜',name:'竜騎士',atk:15,hp:135,sk:{c:{minLen:6},e:'mult',v:3.0,d:'6文字以上の言葉のダメージ3倍'}},
+    {id:'c26',r:3,k:'癒',name:'大司教',atk:15,hp:145,sk:{c:{row:'な'},e:'heal',v:12,d:'な行で始まる言葉でHP12%回復'},pv:{regen:2,d:'毎ターンHP2%回復'}},
+    {id:'c27',r:3,k:'時',name:'時の魔女',atk:14,hp:135,sk:{c:{has:'ん'},e:'mult',v:1.6,d:'「ん」を含む言葉のダメージ1.6倍'},pv:{time:6,d:'1ターンの時間+6秒'}},
+    {id:'c28',r:3,k:'影',name:'暗殺者',atk:14,hp:135,sk:{c:{maxLen:3},e:'mult',v:2.0,d:'3文字以下の言葉のダメージ2倍'}},
+    {id:'c29',r:4,k:'勇',name:'勇者',atk:17,hp:160,sk:{c:{minLen:4},e:'mult',v:1.6,d:'4文字以上の言葉のダメージ1.6倍'},pv:{all:1.2,d:'すべての言葉のダメージ1.2倍'}},
+    {id:'c30',r:4,k:'龍',name:'竜王の娘',atk:16,hp:155,sk:{c:{minLen:5},e:'mult',v:2.2,d:'5文字以上の言葉のダメージ2.2倍（7文字なら4倍）'}},
   ];
   const CARD_BY=Object.fromEntries(CARDS.map(c=>[c.id,c]));
   const RARE_NAME=['','★','★★','★★★','★★★★'];
@@ -105184,7 +105212,7 @@ const QUEST=(function(){
     let mult=B.st.all, notes=[];
     for(const c of partyCards(q)){
       if(!c.sk||!cond(c.sk.c,w,ctx)) continue;
-      if(c.sk.e==='mult'){ let v=c.sk.v; if(c.id==='c30'&&w.length>=7) v=6; mult*=v; notes.push(`${c.name} ×${v}`); }
+      if(c.sk.e==='mult'){ let v=c.sk.v; if(c.id==='c30'&&w.length>=7) v=4; mult*=v; notes.push(`${c.name} ×${v}`); }
       else if(c.sk.e==='heal'){ heal(c.sk.v); notes.push(`${c.name} 回復`); }
       else if(c.sk.e==='shield'){ B.shield=Math.max(B.shield,c.sk.v); notes.push(`${c.name} 防御`); }
     }
@@ -105264,13 +105292,34 @@ const QUEST=(function(){
 
   /* ---- ガチャ ---- */
   function pull(){ let x=Math.random()*100; let r=1; for(const [rr,p] of GACHA_RATE){ x-=p; if(x<=0){ r=rr; break; } } const pool=CARDS.filter(c=>c.r===r); return pool[Math.floor(Math.random()*pool.length)]; }
+  function pullR(minR){ const pool=CARDS.filter(c=>c.r>=minR); const r=pull(); return r.r>=minR?r:pool[Math.floor(Math.random()*pool.length)]; }
   function gacha(n){
     const cost=n===10?GACHA10_COST:GACHA_COST; if(bank()<cost){ el('qGachaMsg').textContent=`ポイントが足りない（${cost}pt必要）`; return; }
-    save('kt_bank',bank()-cost); q=Q(); const got=[];
-    for(let k=0;k<n;k++){ const c=pull(); const dup=!!q.cards[c.id]; q.cards[c.id]=(q.cards[c.id]||0)+1; got.push({c,dup}); }
-    saveQ(q); SND.missionHit();
-    el('qGachaMsg').innerHTML=got.map(({c,dup})=>`<span class="qc r${c.r} big"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}${dup?'・限界突破+1':'・NEW'}</small></span>`).join('');
-    renderHome();
+    save('kt_bank',bank()-cost); q=Q(); q.pity=q.pity||0; const got=[];
+    for(let k=0;k<n;k++){
+      let c=pull();
+      if(q.pity>=29 && c.r<3) c=pullR(3);                 // 天井：30回★3以上が出なければ確定
+      if(n===10&&k===9&&!got.some(g=>g.c.r>=2)&&c.r<2) c=pullR(2); // 10連は★2以上が1枚確定
+      q.pity=c.r>=3?0:q.pity+1;
+      const dup=!!q.cards[c.id]; q.cards[c.id]=(q.cards[c.id]||0)+1; got.push({c,dup});
+    }
+    saveQ(q);
+    showGacha(got);
+  }
+  // 演出：カプセルが揺れて割れ、レア度の色で光ってからカードがめくれる
+  function showGacha(got){
+    const ov=el('gachaOverlay'); ov.hidden=false; const maxR=Math.max(...got.map(g=>g.c.r));
+    ov.innerHTML=`<div class="gstage"><div class="capsule r${maxR}"><div class="cap-top"></div><div class="cap-bot"></div></div><div class="gcards" id="gCards"></div><button class="primary" id="gClose" hidden>とじる</button></div>`;
+    SND.unlock(); const cap=ov.querySelector('.capsule');
+    const beat=(f,t)=>{ try{ SND.tap(f); }catch(e){} };
+    let t=0; const shakes=maxR>=4?6:maxR>=3?4:3;
+    for(let i=0;i<shakes;i++){ setTimeout(()=>{ cap.classList.remove('shake'); void cap.offsetWidth; cap.classList.add('shake'); beat(i+1); },t); t+=420; }
+    setTimeout(()=>{ cap.classList.add('open'); SND.mission(); },t); t+=600;
+    const grid=el('gCards');
+    got.forEach(({c,dup},i)=>{ setTimeout(()=>{ const d=document.createElement('div'); d.className=`gcard r${c.r}`; d.innerHTML=`<div class="gback">${RARE_NAME[c.r]}</div><div class="gfront qc r${c.r} big"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}　攻${cardAtk(c,q)} 体${c.hp}</small><small>${c.sk.d}</small><small class="${dup?'muted':'new'}">${dup?'かぶり → 限界突破':'NEW!'}</small></div>`; grid.appendChild(d); requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add('flip'))); if(c.r>=4) SND.missionHit(); else if(c.r===3) SND.ok(20); else SND.ok(1); }, t+i*(got.length>1?260:0)); });
+    t+=got.length*260+600;
+    setTimeout(()=>{ el('gClose').hidden=false; el('gClose').onclick=()=>{ ov.hidden=true; ov.innerHTML=''; renderHome(); }; ov.onclick=e=>{ if(e.target===ov){ ov.hidden=true; ov.innerHTML=''; renderHome(); } }; },t);
+    el('qGachaMsg').innerHTML=`<span class="small muted">直近の結果：${got.map(g=>g.c.name+RARE_NAME[g.c.r]).join('、')}</span>`;
   }
 
   /* ---- ホーム ---- */
