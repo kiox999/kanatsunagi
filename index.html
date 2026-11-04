@@ -361,6 +361,8 @@ details[open] summary span:last-child{transform:rotate(180deg)}
 .rare .d{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .homebtns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .homebtns button{border-radius:999px;border-width:2px;font-weight:700;font-size:13px}
+.quitbtn{opacity:.75;font-size:12px;padding:5px 10px}
+.quitbtn.armed{opacity:1;color:var(--bad);border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--paper));font-weight:700}
 /* ---- ポップ化：共通パーツ ---- */
 .minilogo{display:inline-flex;gap:3px;vertical-align:middle;margin-right:8px}
 .minilogo i{display:grid;place-items:center;width:22px;height:22px;border-radius:6px;font-style:normal;font-family:var(--disp);font-weight:900;font-size:13px;color:#fff;box-shadow:0 2px 0 rgba(0,0,0,.18)}
@@ -431,6 +433,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
 <div class="topbar" id="topbar">
   <div class="brand"><span class="minilogo" aria-hidden="true"><i class="c1">か</i><i class="c2">な</i><i class="c3">つ</i><i class="c4">な</i><i class="c5">ぎ</i></span><span class="brandtxt">かなつなぎ</span></div>
   <button class="ghost small" id="btnHome" hidden>ホームへ</button>
+  <button class="ghost small quitbtn" id="btnGiveUp" hidden>終了</button>
 </div>
 
 <!-- HOME -->
@@ -614,7 +617,6 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
   <div class="ctrls">
     <button id="btnClear">クリア</button>
     <button class="primary" id="btnSubmit">決定</button>
-    <button class="ghost" id="btnGiveUp">終了</button>
   </div>
   <div class="vplayers" id="vsPlayers" hidden></div>
   <div class="found" id="found"></div>
@@ -106537,7 +106539,7 @@ const LAUNCH='2026-11-04';
 
 /* ---------- views ---------- */
 const VIEWS=['vHome','vLobby','vGame','vResult','vDaily','vSettings','vHistory','vDict','vAdmin','vCpu','vQuest','vParty','vClear'];
-function show(v){ for(const id of VIEWS) $(id).hidden=(id!==v); $('btnHome').hidden=(v==='vHome'||v==='vGame'); $('topbar').hidden=(v==='vHome'); window.scrollTo(0,0); }
+function show(v){ for(const id of VIEWS) $(id).hidden=(id!==v); $('btnHome').hidden=(v==='vHome'||v==='vGame'); if(v!=='vGame'){ $('btnGiveUp').hidden=true; disarmQuit(); } $('topbar').hidden=(v==='vHome'); window.scrollTo(0,0); }
 
 /* ---------- board render ---------- */
 function renderBoard(dists){
@@ -106633,7 +106635,19 @@ bw.addEventListener('pointerup',e=>{
 bw.addEventListener('pointercancel',()=>{dragging=false});
 $('btnClear').onclick=()=>{G.path=[];updateSel()};
 $('btnSubmit').onclick=()=>{ if(G.path.length>=2) submit(); else if(G.path.length===1) feedback('2文字以上つなげてね','dup'); };
-$('btnGiveUp').onclick=()=>{ if(G.mode==='tutorial'){ TUT.end(); show('vHome'); refreshHome(); return; } if(G.mode==='quest'){ QUEST.abort(); return; } if(!G.over) endGame(); };
+let quitArmed=0, quitTimer=null;
+function disarmQuit(){ quitArmed=0; clearTimeout(quitTimer); const b=$('btnGiveUp'); b.classList.remove('armed'); b.textContent=(G.mode==='quest')?'逃げる':'終了'; }
+$('btnGiveUp').onclick=()=>{
+  if(G.mode==='tutorial'){ TUT.end(); show('vHome'); refreshHome(); return; }
+  if(!quitArmed){ // 誤タップ防止：もう一度押すまで終わらない
+    quitArmed=1; const b=$('btnGiveUp'); b.classList.add('armed');
+    b.textContent=(G.mode==='daily'&&!G.retry)?'やめる？（記録はここまで）':(G.mode==='quest')?'逃げる？':'やめる？';
+    clearTimeout(quitTimer); quitTimer=setTimeout(disarmQuit,4000); return;
+  }
+  disarmQuit();
+  if(G.mode==='quest'){ QUEST.abort(); return; }
+  if(!G.over) endGame();
+};
 
 function flash(cls){ const p=G.path.slice(); document.querySelectorAll('.tile').forEach(el=>{ if(p.includes(+el.dataset.i)){ el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);} }); setTimeout(()=>document.querySelectorAll('.tile.'+cls).forEach(el=>el.classList.remove(cls)),500); }
 function feedback(text,cls){ $('preview').innerHTML=`<span class="fb ${cls}">${text}</span>`; }
@@ -106714,7 +106728,7 @@ function startGame(mode,seed,opts){
   $('preview').textContent='　';
   const th=medalThresholds(G.par);
   $('modeLabel').innerHTML=mode==='daily'?(G.retry?'きょうの16マス（練習）':`🥉${th[0]} 🥈${th[1]} 🥇${th[2]}`):mode==='multi'?`対戦 ${G.room?G.room.code:''}・${RULE_NAME[G.rule]}・${N}×${N}`:mode==='cpu'?`CPU対戦・${RULE_NAME[G.rule]}・${N}×${N}`:mode==='fall'?'落ちもの':'フリー';
-  $('btnGiveUp').hidden=(mode==='multi'); $('btnGiveUp').textContent='終了'; $('countdown').textContent='3';
+  $('btnGiveUp').hidden=(mode==='multi'); $('btnGiveUp').textContent='終了'; quitArmed=0; $('btnGiveUp').classList.remove('armed'); $('countdown').textContent='3';
   updateScoreUI(); show('vGame');
   const startAt=opts.startAt||Date.now()+3200;
   const cd=$('countdown'); cd.hidden=false;
@@ -106730,7 +106744,7 @@ function endGame(){
   const timeup=(Date.now()-G.start)/1000>=DUR-0.5;
   if(timeup){ SND.timeup(); const cd=$('countdown'); cd.innerHTML='<span style="font-size:.55em">タイムアップ！</span>'; cd.hidden=false; setTimeout(()=>{ cd.hidden=true; cd.textContent='3'; finish(); },1600); } else { SND.end(); finish(); }
   function finish(){
-  if(G.mode==='daily'&&!G.retry){ const d=dailyAll(); d[todayKey()]={score:G.score,found:G.found.size,total:G.words.length,medal:medalFor(G.score,G.par)}; save('kt_daily',d); }
+  if(G.mode==='daily'&&!G.retry){ const d=dailyAll(); d[todayKey()]={score:G.score,found:G.found.size,total:G.words.length,medal:medalFor(G.score,G.par),end:timeup?'time':'quit'}; save('kt_daily',d); }
   recordHistory();
   QUEST.addBank(G.rule==='race'||G.rule==='territory'?VS.scoreFor(VS.me()):G.score);
   if(G.mode==='multi') MP.submitResult();
@@ -106840,11 +106854,12 @@ function renderCal(){
   const th=medalThresholds(boardPar(makeBoard(hashStr('kana-'+today)).words));
   const thHtml=`<div class="medals" style="margin:6px 0 10px"><span>きょうの基準</span><span>🥉 <b>${th[0]}</b>点</span><span>🥈 <b>${th[1]}</b>点</span><span>🥇 <b>${th[2]}</b>点</span></div>`;
   $('dailyToday').innerHTML=d
-    ?`<div class="small muted">きょう ${today}</div><div class="bigscore">${d.score} <span style="font-size:30px">${MEDAL[d.medal]||''}</span></div><div class="stats"><span>見つけた <b>${d.found}</b> / ${d.total}語</span></div>${thHtml}<div class="ctrls"><button class="primary" id="btnDailyRetry">同じ盤面で練習（記録は変わらない）</button></div>`
+    ?`<div class="small muted">きょう ${today}</div><div class="bigscore">${d.score} <span style="font-size:30px">${MEDAL[d.medal]||''}</span></div><div class="stats"><span>見つけた <b>${d.found}</b> / ${d.total}語</span></div>${thHtml}${d.end!=='time'?'<p class="notice" style="margin:0 0 8px;color:var(--bad)">途中でやめた記録です。やり直せます。</p>':''}<div class="ctrls">${d.end!=='time'?'<button class="primary" id="btnDailyAgain">もう一度ちゃんと挑戦する</button>':''}<button class="${d.end!=='time'?'ghost':'primary'}" id="btnDailyRetry">同じ盤面で練習（記録は変わらない）</button></div>`
     :`<div class="small muted">きょう ${today}</div><p style="margin:6px 0 6px">まだ挑戦していない。120秒、1回きり。</p>${thHtml}<div class="ctrls"><button class="primary" id="btnDailyPlay">挑戦する</button></div>`;
   const bp=$('btnDailyPlay'), br=$('btnDailyRetry');
   if(bp) bp.onclick=()=>{ SND.unlock(); startGame('daily',hashStr('kana-'+today)); };
   if(br) br.onclick=()=>{ SND.unlock(); startGame('daily',hashStr('kana-'+today),{retry:true}); };
+  const ba=$('btnDailyAgain'); if(ba) ba.onclick=()=>{ SND.unlock(); startGame('daily',hashStr('kana-'+today)); };
 }
 $('calPrev').onclick=()=>{ calYM[1]--; if(calYM[1]<0){calYM[1]=11;calYM[0]--;} renderCal(); };
 $('calNext').onclick=()=>{ calYM[1]++; if(calYM[1]>11){calYM[1]=0;calYM[0]++;} renderCal(); };
