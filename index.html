@@ -2,7 +2,7 @@
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>かなつなぎ</title>
 
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=M+PLUS+1p:wght@400;500;700&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+JP:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=M+PLUS+1p:wght@400;500;700&family=Zen+Old+Mincho:wght@500;700;900&family=Klee+One:wght@400;600&family=DotGothic16&display=swap">
 <style>
 /* Layout: one-screen app. Home = mode cards. Game = status strip / mission banner / preview / 4x4 board / found list. */
 :root{
@@ -155,6 +155,37 @@ input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px 
 .qfloat .dmg{color:var(--bad)}.qfloat .hurt{color:var(--bad)}.qfloat .ok{color:var(--ok)}.qfloat .muted{color:var(--muted)}
 .qfloat small{display:block;font-family:var(--body);font-weight:500;font-size:11.5px;color:var(--muted)}
 .qd{align-items:flex-start}.qd .chip{margin-left:6px;font-size:11px}
+/* ---- クエストはドット絵風 ---- */
+:root{--px:"DotGothic16","Zen Maru Gothic",monospace}
+#vQuest,#questPanel,body.quest #board,body.quest .preview,body.quest .ctrls,body.quest #countdown{font-family:var(--px);letter-spacing:.02em}
+#vQuest h2,#vQuest h3,#vQuest b,#questPanel b,body.quest #countdown{font-family:var(--px)}
+#vQuest .card,#questPanel .qenemy,#questPanel .qparty,#vQuest .mode,#vQuest button,#vQuest .qc,#vQuest details.card{border-radius:0;border:3px solid var(--fg);box-shadow:4px 4px 0 var(--fg)}
+#vQuest .ctrls button,#vQuest .row button{box-shadow:3px 3px 0 var(--fg)}
+#vQuest button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--fg)}
+#vQuest .qc b,#questPanel .qc b{border-radius:0;font-family:var(--px)}
+#vQuest .qc{box-shadow:none;border-width:2px}
+#vQuest .mode .ico{border-radius:0;border:2px solid var(--fg);font-family:var(--px)}
+#vQuest .chip{border-radius:0;border-width:2px;font-family:var(--px)}
+#vQuest .notice,#vQuest .small,#questPanel small{font-family:var(--px)}
+#vQuest .bigscore{font-family:var(--px)}
+#vQuest .found{gap:4px}
+.bar{border-radius:0;border:2px solid var(--fg);background:var(--paper);padding:1px;height:14px}
+.bar i{border-radius:0;background-image:repeating-linear-gradient(90deg,transparent 0 6px,rgba(0,0,0,.18) 6px 8px)}
+.bar.hp i{background-color:var(--bad)}.bar.php i{background-color:var(--ok)}.bar.time i{background-color:var(--ink)}
+#questPanel .qenemy,#questPanel .qparty{box-shadow:3px 3px 0 var(--fg)}
+.qem{filter:drop-shadow(2px 2px 0 var(--fg))}
+.qcnt b{font-family:var(--px)}
+.qfloat{font-family:var(--px)}
+body.quest .tile{border-radius:0!important;border:3px solid var(--fg);box-shadow:3px 3px 0 var(--fg);font-family:var(--px);clip-path:none!important;outline:0!important}
+body.quest .tile.sel{box-shadow:1px 1px 0 var(--fg);transform:translate(2px,2px) scale(1)}
+body.quest .tile .alt{font-family:var(--px)}
+body.quest .board{gap:10px}
+body.quest .lines path{stroke:var(--fg);stroke-dasharray:6 4;stroke-width:4}
+body.quest .preview{font-family:var(--px)}
+body.quest .ctrls button{border-radius:0;border:3px solid var(--fg);box-shadow:3px 3px 0 var(--fg)}
+body.quest .ctrls button.primary{background:var(--ink)}
+body.quest #countdown{border-radius:0;font-family:var(--px)}
+body.quest .mission{display:none}
 .tile.hint{background:var(--gold-soft);color:var(--gold);border-color:var(--gold);animation:hint 1.2s ease-in-out infinite}
 :root[data-shape="hex"] .tile.hint{outline-color:var(--gold)}
 @keyframes hint{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
@@ -83223,7 +83254,7 @@ function startGame(mode,seed,opts){
   G.players=opts.players||[{id:'me',name:'あなた',cpu:null}]; G.claims={}; CPU.stop();
   const {tiles,words,rand}=makeBoard(seed);
   G.tiles=tiles; G.words=words; G.missions=G.rule==='fall'?[]:pickMissions(words,rand,tiles); G.par=boardPar(words); G.retry=!!opts.retry; G.cpuOpts=opts.cpuOpts||null;
-  renderBoard(); $('found').innerHTML=''; $('found').hidden=false; $('statusBar').hidden=false; $('mission').hidden=false; $('questPanel').hidden=true; $('vsLog').innerHTML=''; $('vsLog').hidden=true; $('timer').textContent='2:00'; $('timer').classList.remove('low');
+  renderBoard(); $('found').innerHTML=''; $('found').hidden=false; $('statusBar').hidden=false; $('mission').hidden=false; $('questPanel').hidden=true; document.body.classList.remove('quest'); $('vsLog').innerHTML=''; $('vsLog').hidden=true; $('timer').textContent='2:00'; $('timer').classList.remove('low');
   const mb=$('mission'); mb.dataset.id=''; mb.className='mission'; mb.innerHTML=G.rule==='fall'?'<span class="txt muted">消えたマスの上から新しい字が落ちてくる。4秒以内に続けて決めるとコンボ。</span>':G.rule!=='normal'?`<span class="txt muted">${RULE_DESC[G.rule]}</span>`:'<span class="txt muted">ミッションは最初の60秒。満たす言葉は2倍。</span>';
   $('preview').textContent='　';
   const th=medalThresholds(G.par);
@@ -83303,7 +83334,7 @@ const TUT=(function(){
   const MISSION={id:'tut',label:'「す」で始まる言葉',test:w=>w[0]==='す'};
   function start(){
     G.mode='tutorial'; G.seed=0; G.found=new Map(); G.foundCanon=new Map(); G.score=0; G.path=[]; G.over=true; G.retry=false;
-    G.rule='normal'; G.claims={}; G.players=[{id:'me',name:'あなた',cpu:null}]; CPU.stop(); $('vsPlayers').hidden=true; $('vsLog').hidden=true; $('statusBar').hidden=false; $('mission').hidden=false; $('found').hidden=false; $('questPanel').hidden=true;
+    G.rule='normal'; G.claims={}; G.players=[{id:'me',name:'あなた',cpu:null}]; CPU.stop(); $('vsPlayers').hidden=true; $('vsLog').hidden=true; $('statusBar').hidden=false; $('mission').hidden=false; $('found').hidden=false; $('questPanel').hidden=true; document.body.classList.remove('quest');
     G.tiles=TILES.map(t=>({...t})); G.words=solve(G.tiles); G.missions=[]; G.par=boardPar(G.words); step=0;
     renderBoard(); $('found').innerHTML=''; $('score').innerHTML='0<small>点</small>'; $('timer').textContent='練習'; $('timer').classList.remove('low');
     $('preview').textContent='　'; $('modeLabel').textContent='チュートリアル'; $('btnGiveUp').hidden=false; $('btnGiveUp').textContent='やめる';
@@ -83834,7 +83865,7 @@ const QUEST=(function(){
     G.found=new Map(); G.foundCanon=new Map(); G.score=0; G.misses=[]; G.lockUntil=0; G.rejected=[]; G.path=[]; G.over=true; G.combo=0; G.lastOk=0; G.maxCombo=0; G.missions=[]; G.retry=false;
     const {tiles,words}=makeBoard(B.seed); G.tiles=tiles; G.words=words; G.par=0;
     renderBoard(); el('found').innerHTML=''; el('found').hidden=true; el('vsLog').hidden=true; el('vsPlayers').hidden=true; el('preview').textContent='　';
-    el('statusBar').hidden=true; el('mission').hidden=true; el('questPanel').hidden=false;
+    el('statusBar').hidden=true; el('mission').hidden=true; el('questPanel').hidden=false; document.body.classList.add('quest');
     el('btnGiveUp').hidden=false; el('btnGiveUp').textContent='逃げる';
     show('vGame');
     loadFloor(true);
@@ -83926,7 +83957,7 @@ const QUEST=(function(){
   }
   function finish(win){
     if(B.over) return; B.over=true; G.over=true; clearInterval(turnTimer);
-    el('statusBar').hidden=false; el('mission').hidden=false; el('found').hidden=false; el('questPanel').hidden=true; el('btnGiveUp').textContent='終了';
+    el('statusBar').hidden=false; el('mission').hidden=false; el('found').hidden=false; el('questPanel').hidden=true; el('btnGiveUp').textContent='終了'; document.body.classList.remove('quest');
     let reward=0, medal=0, first=false;
     if(win){
       if(B.daily){ const k=todayKey(); const pct=B.hp/B.hpMax; medal=pct>=0.7?3:pct>=0.4?2:1; reward=B.d.reward; if(!q.daily[k]){ q.daily[k]={medal,hp:Math.round(pct*100),turns:B.turns}; addBank(reward); } else reward=0; }
@@ -83975,7 +84006,7 @@ const QUEST=(function(){
     el('qPick').hidden=pickSlot<0;
     if(pickSlot>=0){ const owned=CARDS.filter(c=>q.cards[c.id]); el('qPick').innerHTML=`<div class="small" style="margin-bottom:6px">${pickSlot+1}枠目に入れるカードを選ぶ</div><div class="qgrid">${owned.map(c=>`<button class="qc r${c.r} big${q.party.includes(c.id)?' inparty':''}" data-id="${c.id}"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}　攻${cardAtk(c,q)} 体${c.hp}${(q.cards[c.id]||1)>1?'　LB'+Math.min(5,q.cards[c.id]-1):''}</small><small>${c.sk.d}</small></button>`).join('')}</div><div class="ctrls" style="margin-top:6px"><button class="ghost small" id="qPickCancel">やめる</button></div>`; el('qPickCancel').onclick=()=>{ pickSlot=-1; renderHome(); }; }
     const dd=dailyDungeon(); const today=q.daily[todayKey()];
-    el('qDungeons').innerHTML=[dd,...DUNGEONS].map(d=>`<button class="mode qd" data-id="${d.id}"><span class="ico">${d.daily?'日':ENEMY[d.floors[d.floors.length-1].e].em}</span><div><b>${d.name}</b>${d.daily?(today?`<span class="chip" style="color:var(--gold)">今日 ${MEDAL[today.medal]} 残HP${today.hp}%</span>`:''):(q.cleared[d.id]?'<span class="chip" style="color:var(--ok)">クリア済</span>':'')}<span>${d.desc}　${d.floors.length}階・報酬 ${d.reward}pt${!d.daily&&!q.cleared[d.id]?'（初回2倍）':''}</span><span class="muted">${d.floors.map(f=>ENEMY[f.e].em).join(' ')}</span></div></button>`).join('');
+    el('qDungeons').innerHTML=[dd,...DUNGEONS].map(d=>`<button class="mode qd" data-id="${d.id}"><span class="ico">${d.daily?'日':ENEMY[d.floors[d.floors.length-1].e].em}</span><div><b>${d.name}</b>${d.daily?(today?`<span class="chip" style="color:var(--gold)">今日 ${MEDAL[today.medal]} 残HP${today.hp}%</span>`:''):(q.cleared[d.id]?'<span class="chip" style="color:var(--ok)">クリア済</span>':'')}<span>${d.floors.length}階・報酬 ${d.reward}pt${!d.daily&&!q.cleared[d.id]?'（初回2倍）':''}</span><span class="muted">${d.floors.map(f=>ENEMY[f.e].em).join(' ')}</span></div></button>`).join('');
     const ownedN=Object.keys(q.cards).length;
     el('qColl').innerHTML=`<summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between"><span style="font-family:var(--disp);font-weight:700">カード図鑑 <span class="muted small">${ownedN} / ${CARDS.length}</span></span><span class="muted small">▼</span></summary><div class="qgrid" style="margin-top:10px">${CARDS.map(c=>q.cards[c.id]?`<span class="qc r${c.r} big"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}　攻${cardAtk(c,q)} 体${c.hp}${(q.cards[c.id]||1)>1?'　LB'+Math.min(5,q.cards[c.id]-1):''}</small><small>${c.sk.d}${c.pv?'／'+c.pv.d:''}</small></span>`:`<span class="qc lock big"><b>？</b>？？？<small>${RARE_NAME[c.r]}</small></span>`).join('')}</div>`;
   }
