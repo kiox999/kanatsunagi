@@ -29,7 +29,7 @@
 
 ## 辞書について
 
-語彙は JMdict（EDRDG）を加工して同梱している。
+語彙は JMdict（EDRDG）と JMnedict（固有名詞：地名・史跡・人名・駅名・作品名）を加工して同梱している。
 JMdict は Creative Commons Attribution-ShareAlike 4.0 ライセンス。
 https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project
 
