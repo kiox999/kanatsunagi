@@ -206,6 +206,24 @@ input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px 
 .gcard.r4.flip{animation:glow 1.2s infinite alternate}
 @keyframes glow{from{filter:drop-shadow(0 0 4px #ffd166)}to{filter:drop-shadow(0 0 16px #ff5d8f)}}
 .gfront .new{color:var(--c1);font-weight:900}
+/* クリア画面・宝箱 */
+.clearcard{text-align:center;display:grid;gap:6px;justify-items:center;padding:20px 14px 16px}
+.congrats{font-family:var(--px);font-size:34px;font-weight:900;color:var(--gold);text-shadow:3px 3px 0 var(--fg);animation:congr 1s ease-in-out infinite alternate;letter-spacing:.05em}
+@keyframes congr{from{transform:scale(1) rotate(-2deg)}to{transform:scale(1.06) rotate(2deg)}}
+.chestwrap{display:grid;justify-items:center;gap:8px;margin-top:10px}
+.chest{position:relative;width:120px;height:96px;perspective:260px;background:none!important;border:0!important;box-shadow:none!important;padding:0;cursor:pointer}
+.chest .box{position:absolute;left:0;right:0;bottom:0;height:56px;background:#b5651d;border:4px solid #1d2433;box-shadow:inset 0 0 0 6px #d98c3a}
+.chest .lid{position:absolute;left:0;right:0;top:8px;height:40px;background:#c9742a;border:4px solid #1d2433;border-bottom:0;box-shadow:inset 0 0 0 6px #e09a4a;transform-origin:50% 100%;transition:transform .5s}
+.chest .lock{position:absolute;left:50%;top:40px;width:20px;height:22px;margin-left:-10px;background:#ffd166;border:4px solid #1d2433;z-index:2}
+.chest.shake{animation:cshake .5s}
+.chest.opened .lid{transform:rotateX(-75deg) translateY(-6px);background:#8a4a14}
+.chest.opened .lock{opacity:0}
+.chest.opened:not(.empty)::after{content:"";position:absolute;left:10px;right:10px;top:-30px;height:70px;background:radial-gradient(ellipse at 50% 100%,rgba(255,230,120,.95),rgba(255,230,120,0) 70%);animation:flash 1s forwards}
+.chest.empty{opacity:.5}
+.loot{display:grid;gap:10px;justify-items:center;width:min(100%,260px);margin-top:4px}
+.lootpt{font-family:var(--px);font-size:32px;font-weight:900;color:var(--ink)}
+.lootpt small{font-size:14px}
+.loot .gcard{width:100%}
 .qslots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .qslots .qc.big{grid-template-columns:1fr;justify-items:center;text-align:center;min-height:96px;width:100%;cursor:pointer}
 .qslots .qc.big b{grid-row:auto;width:34px;height:34px;font-size:18px}
@@ -214,11 +232,11 @@ input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px 
 .qslots .qc.empty{border-style:dashed;color:var(--muted)}
 /* ---- クエストはドット絵風 ---- */
 :root{--px:"DotGothic16","Zen Maru Gothic",monospace}
-#vQuest,#vParty,#questPanel,body.quest #board,body.quest .preview,body.quest .ctrls,body.quest #countdown{font-family:var(--px);letter-spacing:.02em}
+#vQuest,#vParty,#vClear,#questPanel,body.quest #board,body.quest .preview,body.quest .ctrls,body.quest #countdown{font-family:var(--px);letter-spacing:.02em}
 #vQuest h2,#vQuest h3,#vQuest b,#vParty h2,#vParty h3,#vParty b,#questPanel b,body.quest #countdown{font-family:var(--px)}
-#vQuest .card,#vParty .card,#questPanel .qenemy,#questPanel .qparty,#vQuest .mode,#vQuest button,#vParty button,#vQuest .qc,#vParty .qc,#vQuest details.card,#vParty details.card{border-radius:0;border:3px solid var(--fg);box-shadow:4px 4px 0 var(--fg)}
+#vQuest .card,#vParty .card,#vClear .card,#questPanel .qenemy,#questPanel .qparty,#vQuest .mode,#vQuest button,#vParty button,#vQuest .qc,#vParty .qc,#vQuest details.card,#vParty details.card{border-radius:0;border:3px solid var(--fg);box-shadow:4px 4px 0 var(--fg)}
 #vQuest .ctrls button,#vQuest .row button{box-shadow:3px 3px 0 var(--fg)}
-#vQuest button:active,#vParty button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--fg)}
+#vQuest button:active,#vParty button:active,#vClear button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--fg)}
 #vQuest .qc b,#vParty .qc b,#questPanel .qc b{border-radius:0;font-family:var(--px)}
 #vQuest .qc,#vParty .qc{box-shadow:none;border-width:2px}
 #vQuest .mode .ico{border-radius:0;border:2px solid var(--fg);font-family:var(--px)}
@@ -502,6 +520,9 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
   <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="font-size:15px">パーティ</h3><button id="qEditParty">編成</button></div><div class="qcards" id="qParty2"></div><div class="small muted" id="qPartyStat" style="margin-top:6px"></div></div>
   <div class="card"><h3 style="font-size:15px;margin-bottom:8px">ダンジョン</h3><p class="notice" style="margin:0 0 8px">ターン制。1ターンの制限時間内に言葉を1つ作って攻撃。言葉の点数×パーティの攻撃力がダメージ。敵は「攻撃まで」が0になると殴ってくる。</p><div class="modes" id="qDungeons"></div></div>
 </section>
+
+<!-- QUEST CLEAR -->
+<section class="view" id="vClear" hidden></section>
 
 <!-- PARTY EDIT -->
 <section class="view" id="vParty" hidden>
@@ -106492,7 +106513,7 @@ function dailyDone(){ return dailyAll()[todayKey()]||null; }
 const LAUNCH='2026-11-04';
 
 /* ---------- views ---------- */
-const VIEWS=['vHome','vLobby','vGame','vResult','vDaily','vSettings','vHistory','vDict','vAdmin','vCpu','vQuest','vParty'];
+const VIEWS=['vHome','vLobby','vGame','vResult','vDaily','vSettings','vHistory','vDict','vAdmin','vCpu','vQuest','vParty','vClear'];
 function show(v){ for(const id of VIEWS) $(id).hidden=(id!==v); $('btnHome').hidden=(v==='vHome'||v==='vGame'); $('topbar').hidden=(v==='vHome'); window.scrollTo(0,0); }
 
 /* ---------- board render ---------- */
@@ -107431,6 +107452,7 @@ const QUEST=(function(){
       saveQ(q);
     }
     SND[win?'end':'timeup']();
+    if(win){ showClear({reward,medal,first,gift:reward>0}); return; }
     openHome();
     const r=el('qResult'); r.hidden=false;
     r.innerHTML=`<div class="small muted">${B.d.name}</div><div class="bigscore" style="font-size:30px">${win?'クリア！':'力尽きた…'}${medal?' '+MEDAL[medal]:''}</div>
@@ -107439,6 +107461,33 @@ const QUEST=(function(){
     r.scrollIntoView({block:'nearest'});
   }
   function abort(){ if(!B||B.over) return; finish(false); }
+  // クリア画面：おめでとう → 宝箱をタップ → ポイントとカード1枚
+  function showClear(o){
+    show('vClear'); document.body.classList.add('quest');
+    const v=el('vClear');
+    v.innerHTML=`<div class="card clearcard">
+      <div class="congrats">おめでとう！</div>
+      <div class="small muted">${B.d.name} を制覇</div>
+      <div class="stats" style="justify-content:center;margin-top:8px"><span>ターン <b>${B.turns}</b></span><span>与ダメージ <b>${B.dmgTotal}</b></span><span>残りHP <b>${B.hp}</b>/${B.hpMax}</span>${o.medal?`<span>評価 <b>${MEDAL[o.medal]}</b></span>`:''}</div>
+      <div class="chestwrap"><button class="chest" id="chestBtn" aria-label="宝箱をあける"><span class="lid"></span><span class="box"></span><span class="lock"></span></button><div class="small" id="chestHint">${o.gift?'宝箱をタップ！':'今日の宝箱はもう開けている'}</div></div>
+      <div class="loot" id="loot" hidden></div>
+      <div class="ctrls" style="margin-top:12px"><button class="primary" id="clearBack" hidden>受け取る</button></div>
+    </div>`;
+    const btn=el('chestBtn');
+    if(!o.gift){ btn.classList.add('opened','empty'); el('clearBack').hidden=false; }
+    btn.onclick=()=>{
+      if(btn.classList.contains('opened')) return;
+      btn.classList.add('shake'); SND.tap(3);
+      setTimeout(()=>{ btn.classList.remove('shake'); btn.classList.add('opened'); SND.mission();
+        q=Q(); q.pity=q.pity||0; let c=pull(); if(q.pity>=29&&c.r<3) c=pullR(3); q.pity=c.r>=3?0:q.pity+1; const dup=!!q.cards[c.id]; q.cards[c.id]=(q.cards[c.id]||0)+1; saveQ(q);
+        const L=el('loot'); L.hidden=false;
+        L.innerHTML=`<div class="lootpt">+${o.reward} <small>pt</small>${o.first?'<small class="muted">（初回クリアで2倍）</small>':''}</div><div class="gcard r${c.r}" id="lootCard"><div class="gback">${RARE_NAME[c.r]}</div><div class="gfront qc r${c.r} big"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}　攻${cardAtk(c,q)} 体${c.hp}</small><small>${c.sk.d}</small><small class="${dup?'muted':'new'}">${dup?'かぶり → 限界突破':'NEW!'}</small></div></div>`;
+        el('chestHint').textContent='';
+        setTimeout(()=>{ el('lootCard').classList.add('flip'); if(c.r>=4) SND.missionHit(); else if(c.r===3) SND.ok(20); else SND.ok(1); el('clearBack').hidden=false; },700);
+      },700);
+    };
+    el('clearBack').onclick=()=>{ document.body.classList.remove('quest'); openHome(); };
+  }
 
   /* ---- デイリー ---- */
   function dailyDungeon(){
@@ -107515,7 +107564,7 @@ const QUEST=(function(){
   el('qDungeons').addEventListener('click',e=>{ const b=e.target.closest('.qd'); if(!b) return; SND.unlock(); const id=b.dataset.id; const d=id==='daily'?dailyDungeon():DUNGEONS.find(x=>x.id===id); startDungeon(d,id==='daily'?hashStr('questboard-'+todayKey()):undefined); });
   el('qGacha1').onclick=()=>gacha(1); el('qGacha10').onclick=()=>gacha(10);
   el('mQuest').onclick=openHome;
-  return {openHome,onWord,abort,addBank,bank,active:()=>!!B&&!B.over};
+  return {openHome,onWord,abort,addBank,bank,active:()=>!!B&&!B.over,_debugClear:()=>{ B={d:DUNGEONS[0],turns:7,dmgTotal:300,hp:200,hpMax:330,over:true,floor:3}; q=Q(); showClear({reward:300,medal:0,first:true,gift:true}); }};
 })();
 
 window.KT_DEBUG={G,VS,CPU,QUEST,baseScore,wordTier};
