@@ -379,7 +379,12 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
 <!-- DICT（みんなの辞書：申請と採用語一覧） -->
 <section class="view" id="vDict" hidden>
   <div class="card">
-    <h2 style="font-size:18px;margin-bottom:4px">みんなの辞書</h2>
+    <h2 style="font-size:18px;margin-bottom:4px">辞書を調べる</h2>
+    <div class="row"><input type="text" id="dpSearch" maxlength="8" placeholder="ひらがなで入力（例：あほ）"></div>
+    <div id="dpSearchRes" class="small" style="margin-top:8px;min-height:20px"></div>
+  </div>
+  <div class="card">
+    <h2 style="font-size:18px;margin-bottom:4px">みんなの辞書に申請</h2>
     <p class="notice" style="margin:0 0 10px">辞書にない言葉を申請できる。管理人が採用すると全員の辞書に入り、ゲーム中に通るようになる。</p>
     <div class="row" style="margin-bottom:6px"><input type="text" id="dpWord" maxlength="8" placeholder="ひらがなで（2〜8文字）"></div>
     <div class="row" style="margin-bottom:6px"><input type="text" id="dpKanji" maxlength="20" placeholder="表記（漢字・カタカナなど）"></div>
@@ -104956,14 +104961,34 @@ const DICTX=(function(){
     $('dpExtra').innerHTML=ex.length?ex.map(([w,v])=>`<span class="fw"><b>${MP.esc(w)}</b><i>${MP.esc(v.d||'')}</i><i>by ${MP.esc(v.by||'')}</i></span>`).join(''):'<span class="muted small">まだない。最初の1語を申請しよう</span>';
   }
   $('dpSend').onclick=async()=>{
-    const w=$('dpWord').value.trim(), d=$('dpKanji').value.trim(), note=$('dpNote').value.trim(), by=$('dpBy').value.trim()||'名無し';
+    const w=toHira($('dpWord').value), d=$('dpKanji').value.trim(), note=$('dpNote').value.trim(), by=$('dpBy').value.trim()||'名無し';
     if(!/^[ぁ-ん]{2,8}$/.test(w)){ $('dpMsg').textContent='ひらがな2〜8文字で'; return; }
-    if(DICT.has(w)){ $('dpMsg').textContent='その言葉はもう辞書にある'; return; }
+    if(DICT.has(w)||DICT.has(canon(w))){ $('dpMsg').textContent='その言葉はもう辞書にある'; return; }
     const db=MP.db(); if(!db) return; $('dpSend').disabled=true;
     try{ const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); await db.doc('proposals/'+id).set({w,d,note,by,t:Date.now(),status:'pending'}); $('dpMsg').textContent='送った！採用をお待ちください'; $('dpWord').value=''; $('dpKanji').value=''; $('dpNote').value=''; try{ localStorage.setItem('kt_nick',by); }catch(e){} }
     catch(e){ $('dpMsg').textContent='送れなかった：'+(e&&e.code||e); }
     $('dpSend').disabled=false;
   };
+  // 辞書検索（手持ちの辞書＋みんなの辞書を即時検索。カタカナもひらがなに直す）
+  function toHira(t){ return t.replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60)).trim(); }
+  function lookup(raw){
+    const w=toHira(raw); const out=$('dpSearchRes');
+    if(!w){ out.innerHTML=''; return; }
+    if(!/^[ぁ-ん]{1,8}$/.test(w)){ out.innerHTML='<span class="muted">ひらがな（またはカタカナ）で</span>'; return; }
+    const e=DICT.get(w);
+    let html='';
+    if(e){ html+=`<div><b style="font-family:var(--disp);font-size:17px">${w}</b> <span style="color:var(--ok);font-weight:700">✓ 辞書にある</span>${stars(wordTier(w))}${e[0][3]?' <span class="mchip" style="color:var(--ink);border-color:var(--ink);background:var(--ink-soft)">みんなの辞書</span>':''}<div class="muted">${e.map(x=>x[2]).filter(x=>x!==w).join('／')||'（かな書き）'}　${baseScore(w)}点</div></div>`; }
+    else if(w.length>=2){ html+=`<div><b style="font-family:var(--disp);font-size:17px">${w}</b> <span style="color:var(--bad);font-weight:700">✕ 辞書にない</span> <button class="small" id="dpUse">この言葉を申請</button></div>`; }
+    // 前方一致の候補（最大12件）
+    const c=canon(w); const pre=[]; if(w.length>=2){ for(const k of DICT.keys()){ if(k!==w&&k.startsWith(w)){ pre.push(k); if(pre.length>=12) break; } } }
+    const alt=(w!==c&&DICT.has(c))?c:null;
+    if(alt) html+=`<div class="muted" style="margin-top:4px">大小違いの「${alt}」は辞書にある（同じ言葉として扱う）</div>`;
+    if(pre.length) html+=`<div style="margin-top:6px" class="found">${pre.map(k=>`<span class="fw"><b>${k}</b>${stars(wordTier(k))}<i>${(DICT.get(k)[0][2]!==k?DICT.get(k)[0][2]:'')}</i></span>`).join('')}</div>`;
+    out.innerHTML=html;
+    const u=$('dpUse'); if(u) u.onclick=()=>{ $('dpWord').value=w; $('dpWord').scrollIntoView({block:'center',behavior:'smooth'}); $('dpKanji').focus(); };
+  }
+  $('dpSearch').addEventListener('input',e=>lookup(e.target.value));
+  $('dpWord').addEventListener('input',e=>{ const w=toHira(e.target.value); $('dpMsg').textContent=DICT.has(w)?'その言葉はもう辞書にある':''; });
   $('btnDict').onclick=openDict;
   $('btnDictAdmin').onclick=openAdmin;
   if(location.hash==='#admin') openAdmin();
