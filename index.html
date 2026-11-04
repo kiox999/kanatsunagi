@@ -106388,17 +106388,17 @@ const SETTINGS=Object.assign({size:1,font:'maru',hit:0.36,sound:1,vol:0.6,skin:'
 // 着せ替え（unlock は実績名。null は最初から）
 const SKINS=[
   {id:'default',name:'標準',sw:['#2f4b8a','#eef1f5','#ffffff','#dde5f7'],unlock:null},
-  {id:'washi',name:'和紙',sw:['#8a3b2b','#efe6d2','#fbf6ea','#f1e7c6'],unlock:'五文字'},
-  {id:'chalk',name:'黒板',sw:['#ffe08a','#1f3a2f','#2a4c3f','#36584b'],unlock:'常連'},
-  {id:'karte',name:'カルテ',sw:['#1f7a8c','#e7eef3','#ffffff','#c9d6e0'],unlock:'ミッション達成'},
+  {id:'washi',name:'和紙',sw:['#8a3b2b','#efe6d2','#fbf6ea','#f1e7c6'],unlock:'五文字の壁'},
+  {id:'chalk',name:'黒板',sw:['#ffe08a','#1f3a2f','#2a4c3f','#36584b'],unlock:'かな通い'},
+  {id:'karte',name:'カルテ',sw:['#1f7a8c','#e7eef3','#ffffff','#c9d6e0'],unlock:'ミッション見習い'},
   {id:'night',name:'夜空',sw:['#ffd166','#0d1326','#1c2850','#28355e'],unlock:'三日坊主卒業'},
-  {id:'neon',name:'ネオン',sw:['#ff3cac','#0b0b16','#1a1a33','#2ef2ff'],unlock:'三百点'},
+  {id:'neon',name:'ネオン',sw:['#ff3cac','#0b0b16','#1a1a33','#2ef2ff'],unlock:'三百の言霊'},
 ];
 const SHAPES=[
   {id:'square',name:'四角',unlock:null},
-  {id:'round',name:'まる',unlock:'初メダル'},
-  {id:'tag',name:'札',unlock:'レアハンター'},
-  {id:'hex',name:'六角',unlock:'激レア発見'},
+  {id:'round',name:'まる',unlock:'はじめてのメダル'},
+  {id:'tag',name:'札',unlock:'掘り出し物'},
+  {id:'hex',name:'六角',unlock:'金脈発見'},
 ];
 const FONTS={maru:['"Zen Maru Gothic"','"M PLUS 1p"'],gothic:['"M PLUS 1p"','"M PLUS 1p"'],mincho:['"Zen Old Mincho"','"Zen Old Mincho"'],klee:['"Klee One"','"Klee One"']};
 function applySettings(){
@@ -106417,7 +106417,7 @@ function applySettings(){
 }
 $('setSkin').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b||b.disabled) return; SETTINGS.skin=b.dataset.v; applySettings(); });
 $('setShape').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b||b.disabled) return; SETTINGS.shape=b.dataset.v; applySettings(); });
-function histDefault(){ return {games:0,words:0,best:0,bestWord:null,longest:0,missions:0,rare:{},maxFound:0,medWords:0,foodWords:0,sportWords:0,sciWords:0,kataWords:0,multiWins:0,doubleMission:0,wonRounds:{}}; }
+function histDefault(){ return {games:0,words:0,best:0,bestWord:null,longest:0,missions:0,rare:{},maxFound:0,medWords:0,foodWords:0,sportWords:0,sciWords:0,kataWords:0,multiWins:0,doubleMission:0,wonRounds:{},totalPts:0,fallGames:0,fallCombo:0,cpuWins:{},multiGames:0,dakuWords:0,smallWords:0,tinyWords:0,barWords:0,palin:0,dupChar:0,twoLetter:0,questClears:{},questDaily:0,gacha:0,proposals:0,bestPts:0}; }
 function unlockedNames(){ try{ return achievements(Object.assign(histDefault(),load('kt_hist',{})),dailyAll()).filter(a=>a[2]).map(a=>a[0]); }catch(e){ return []; } }
 for(const [id,key,num] of [['setSize','size',1],['setFont','font',0],['setHit','hit',1],['setSound','sound',1]]) $(id).addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; SETTINGS[key]=num?+b.dataset.v:b.dataset.v; applySettings(); });
 $('setVol').addEventListener('input',e=>{ SETTINGS.vol=+e.target.value/100; applySettings(); SND.unlock(); SND.tap(3); });
@@ -106814,12 +106814,17 @@ $('btnHistory').onclick=()=>{ renderHistory(); show('vHistory'); };
 function recordHistory(){
   const H=Object.assign(histDefault(),load('kt_hist',{}));
   const before=new Set(achievements(H,dailyAll()).filter(a=>a[2]).map(a=>a[0]));
-  H.games++; H.words+=G.found.size; H.best=Math.max(H.best,G.score); H.maxFound=Math.max(H.maxFound,G.found.size);
+  H.games++; H.words+=G.found.size; H.best=Math.max(H.best,G.score); H.maxFound=Math.max(H.maxFound,G.found.size); H.totalPts=(H.totalPts||0)+G.score;
+  if(G.rule==='fall'){ H.fallGames=(H.fallGames||0)+1; H.fallCombo=Math.max(H.fallCombo||0,G.maxCombo||0); }
+  if(G.mode==='multi') H.multiGames=(H.multiGames||0)+1;
   const today=todayKey();
   for(const [w,v] of G.found){
     if(!H.bestWord||v.pts>H.bestWord.pts) H.bestWord={w,pts:v.pts};
     H.longest=Math.max(H.longest,w.length);
     if(v.mission) H.missions++;
+    H.bestPts=Math.max(H.bestPts||0,v.pts);
+    if(DAKU_RE.test(w)) H.dakuWords=(H.dakuWords||0)+1; if(/[っゃゅょ]/.test(w)) H.smallWords=(H.smallWords||0)+1; if(/[ぁぃぅぇぉ]/.test(w)) H.tinyWords=(H.tinyWords||0)+1; if(w.includes('ー')) H.barWords=(H.barWords||0)+1;
+    if(w.length>=3&&w===[...w].reverse().join('')) H.palin=(H.palin||0)+1; if(new Set(canon(w)).size<canon(w).length) H.dupChar=(H.dupChar||0)+1; if(w.length===2) H.twoLetter=(H.twoLetter||0)+1;
     { const e=DICT.get(w)||[]; if(e.some(x=>entryIs(x,1,MED_RE))) H.medWords++; if(e.some(x=>entryIs(x,2,FOOD_RE))) H.foodWords++; if(e.some(x=>x[1]&4)) H.sportWords++; if(e.some(x=>x[1]&8)) H.sciWords++; if(e.some(x=>x[1]&16)) H.kataWords++; }
     const t=wordTier(w);
     if(t>=2){ const e=DICT.get(w); const prev=H.rare[w]; if(!prev||v.pts>prev.pts) H.rare[w]={t,d:e[0][2],pts:v.pts,date:today}; }
@@ -106835,17 +106840,39 @@ function achievements(H,all){
   // 連続日数
   const keys=Object.keys(all).sort(); let streak=0,best=0,prev=null;
   for(const k of keys){ const t=Date.parse(k); streak=(prev!==null&&t-prev===86400e3)?streak+1:1; best=Math.max(best,streak); prev=t; }
+  const Qd=load('kt_quest',null)||{cards:{},cleared:{},daily:{}}; const has4=Object.keys(Qd.cards||{}).some(id=>/^c(29|30)$/.test(id)); const qClears=Object.keys(Qd.cleared||{}).length; const qDaily=Object.keys(Qd.daily||{}).length;
+  const cw=H.cpuWins||{}; const cpuAny=Object.values(cw).reduce((a,b)=>a+b,0);
   return [
-    ['はじめの一歩','1回遊ぶ',H.games>=1],['常連','10回遊ぶ',H.games>=10],['中毒','50回遊ぶ',H.games>=50],
-    ['百点','1ゲームで100点',H.best>=100],['二百点','1ゲームで200点',H.best>=200],['三百点','1ゲームで300点',H.best>=300],
-    ['語彙力','1ゲームで15語',H.maxFound>=15],['辞書人間','1ゲームで25語',H.maxFound>=25],
-    ['五文字','5文字の言葉を見つける',H.longest>=5],['六文字','6文字の言葉を見つける',H.longest>=6],['七文字','7文字の言葉を見つける',H.longest>=7],['八文字','8文字の言葉を見つける',H.longest>=8],
-    ['レアハンター','★★以上を10語',rareN>=10],['激レア発見','★★★を見つける',rare3>=1],['激レア収集家','★★★を20語',rare3>=20],
-    ['ミッション達成','ミッション語を5回',H.missions>=5],['ミッションマスター','ミッション語を30回',H.missions>=30],
-    ['初メダル','デイリーでメダル',medals>=1],['金メダル','デイリーで🥇',gold>=1],['金5枚','デイリーで🥇を5回',gold>=5],
-    ['三日坊主卒業','デイリー3日連続',best>=3],['皆勤','デイリー7日連続',best>=7],
-    ['ミッション職人','1ゲームでミッション語を5語',(H.maxMission||0)>=5],
-    ['初勝利','対戦で1位になる',(H.multiWins||0)>=1],['常勝','対戦で5回1位になる',(H.multiWins||0)>=5],
+    // あそぶ
+    ['ことばの旅人','はじめて遊ぶ',H.games>=1],['かな通い','10回遊ぶ',H.games>=10],['かなの住人','50回遊ぶ',H.games>=50],['かなの主','200回遊ぶ',H.games>=200],
+    ['千語の道','言葉を累計1000語',H.words>=1000],['万語の海','言葉を累計5000語',H.words>=5000],
+    // 得点
+    ['百の言霊','1ゲームで100点',H.best>=100],['二百の言霊','1ゲームで200点',H.best>=200],['三百の言霊','1ゲームで300点',H.best>=300],['言霊使い','1ゲームで400点',H.best>=400],
+    ['一撃必殺','1語で50点以上',(H.bestPts||0)>=50],['貯金箱','累計5000点',(H.totalPts||0)>=5000],['金庫番','累計30000点',(H.totalPts||0)>=30000],
+    // 語数
+    ['口が回る','1ゲームで15語',H.maxFound>=15],['立て板に水','1ゲームで25語',H.maxFound>=25],['辞書を飲んだ','1ゲームで35語',H.maxFound>=35],
+    // 長さ
+    ['五文字の壁','5文字の言葉',H.longest>=5],['六文字の峠','6文字の言葉',H.longest>=6],['七文字の頂','7文字の言葉',H.longest>=7],['八文字の彼方','8文字の言葉',H.longest>=8],
+    // レア
+    ['掘り出し物','★★以上を10語',rareN>=10],['目利き','★★以上を50語',rareN>=50],['金脈発見','★★★を見つける',rare3>=1],['骨董商','★★★を20語',rare3>=20],['博物館長','★★★を50語',rare3>=50],
+    // 読み替え
+    ['濁点つかい','濁点・半濁点で読む言葉を20語',(H.dakuWords||0)>=20],['ちいさな工夫','っ・ゃ・ゅ・ょの言葉を30語',(H.smallWords||0)>=30],['小さな巨人','ぁ・ぃ・ぅ・ぇ・ぉの言葉を5語',(H.tinyWords||0)>=5],['のばし屋','伸ばし棒の言葉を10語',(H.barWords||0)>=10],
+    ['回文詩人','回文（たけやぶやけた等）を3語',(H.palin||0)>=3],['ぞろ目好き','同じ字を2回使う言葉を30語',(H.dupChar||0)>=30],['短気','2文字の言葉を100語',(H.twoLetter||0)>=100],
+    // ミッション
+    ['ミッション見習い','ミッション語を5回',H.missions>=5],['ミッション職人','ミッション語を30回',H.missions>=30],['ミッション達人','ミッション語を100回',H.missions>=100],['一心不乱','1ゲームでミッション語を5語',(H.maxMission||0)>=5],
+    // デイリー
+    ['はじめてのメダル','デイリーでメダル',medals>=1],['金色の朝','デイリーで🥇',gold>=1],['金メダリスト','デイリーで🥇を5回',gold>=5],['殿堂入り','デイリーで🥇を20回',gold>=20],
+    ['三日坊主卒業','デイリー3日連続',best>=3],['一週間','デイリー7日連続',best>=7],['皆勤賞','デイリー30日連続',best>=30],
+    // 落ちもの
+    ['落ちもの入門','落ちものを遊ぶ',(H.fallGames||0)>=1],['コンボ職人','落ちもので5コンボ',(H.fallCombo||0)>=5],['連鎖の鬼','落ちもので8コンボ',(H.fallCombo||0)>=8],
+    // 対戦
+    ['機械に勝利','CPUに勝つ',cpuAny>=1],['鬼退治','「おに」に勝つ',(cw.oni||0)>=1],['鬼の宿敵','「おに」に10回勝つ',(cw.oni||0)>=10],
+    ['対戦デビュー','みんなで対戦を遊ぶ',(H.multiGames||0)>=1],['初勝利','対戦（つよい以上のCPUか人）で1位',(H.multiWins||0)>=1],['常勝','対戦で5回1位',(H.multiWins||0)>=5],['無敗の王','対戦で20回1位',(H.multiWins||0)>=20],
+    // クエスト
+    ['冒険のはじまり','はじまりの森をクリア',!!(Qd.cleared||{}).d1],['洞窟探検家','ことばの洞窟をクリア',!!(Qd.cleared||{}).d2],['沼を越えて','濁音の沼をクリア',!!(Qd.cleared||{}).d3],['塔の覇者','竜の塔をクリア',!!(Qd.cleared||{}).d4],
+    ['日課の冒険者','きょうのダンジョンを5回クリア',qDaily>=5],['ガチャ初心者','ガチャを引く',(H.gacha||0)>=1],['ガチャ中毒','ガチャを50回引く',(H.gacha||0)>=50],['虹を引いた','★★★★を手に入れる',has4],
+    // 辞書
+    ['辞書に一石','みんなの辞書に申請する',(H.proposals||0)>=1],
   ];
 }
 
@@ -106909,7 +106936,7 @@ const VS=(function(){
     el.innerHTML=rows.map(({p,s,pts})=>`<span class="vp ${COLORS[colorIdx(p.id)]}${p.id===me()?' isme':''}"><span class="dot ${COLORS[colorIdx(p.id)]}"></span>${MP.esc(p.name)} <b>${s}</b>${G.rule==='territory'?'<small>マス</small>':''}</span>`).join(''); }
   function rankRows(){ return G.players.map(p=>({id:p.id,name:p.name,score:scoreFor(p.id),tiles:tilesOf(p.id),n:Object.keys(G.claims[p.id]||{}).length,best:Object.values(G.claims[p.id]||{}).sort((a,b)=>b.pts-a.pts)[0]})).sort((a,b)=>G.rule==='territory'?(b.tiles-a.tiles||b.score-a.score):(b.score-a.score)); }
   function renderRank(){ const rows=rankRows(); $('rankList').innerHTML=rows.map((x,i)=>`<div class="rk${x.id===me()?' me':''}"><span class="n">${i+1}</span><div><div><span class="dot ${COLORS[colorIdx(x.id)]}"></span>${MP.esc(x.name)}</div><div class="d">${x.n}語・最高「${x.best?x.best.w:'—'}」${G.rule==='territory'?'・'+x.score+'点':''}</div></div><span class="s">${G.rule==='territory'?x.tiles+'<small style="font-size:12px">マス</small>':x.score}</span></div>`).join(''); $('rankNote').textContent=G.rule==='race'?'同じ言葉は先に出した人だけが得点':G.rule==='territory'?'マスの数で順位（同数なら点数）':''; }
-  function recordCpuWin(){ const rows=rankRows(); if(rows.length>=2&&rows[0].id===me()&&(G.cpuOpts&&['hard','oni'].includes(G.cpuOpts.level))){ const H=Object.assign(histDefault(),load('kt_hist',{})); H.multiWins=(H.multiWins||0)+1; save('kt_hist',H); } }
+  function recordCpuWin(){ const rows=rankRows(); if(rows.length>=2&&rows[0].id===me()&&G.cpuOpts){ const H=Object.assign(histDefault(),load('kt_hist',{})); H.cpuWins=H.cpuWins||{}; H.cpuWins[G.cpuOpts.level]=(H.cpuWins[G.cpuOpts.level]||0)+1; if(['hard','oni'].includes(G.cpuOpts.level)) H.multiWins=(H.multiWins||0)+1; save('kt_hist',H); } }
   function reset(){ logged=new Set(); }
   return {me,nameOf,takenBy,scoreFor,tilesOf,owners,paintOwners,onMyClaim,onOtherClaim,syncClaims,renderPlayers,renderRank,rankRows,recordCpuWin,reset,colorIdx,COLORS};
 })();
@@ -107121,7 +107148,7 @@ const DICTX=(function(){
       const db=MP.db(); if(!db) return;
       const d=$('propKanji').value.trim(), note=$('propNote').value.trim(), by=$('propBy').value.trim()||'名無し';
       $('propSend').disabled=true;
-      try{ const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); await db.doc('proposals/'+id).set({w,d,note,by,t:Date.now(),status:'pending'}); $('propMsg').textContent='送った！'; setTimeout(()=>{ f.hidden=true; },900);
+      try{ const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); await db.doc('proposals/'+id).set({w,d,note,by,t:Date.now(),status:'pending'}); $('propMsg').textContent='送った！'; { const H=Object.assign(histDefault(),load('kt_hist',{})); H.proposals=(H.proposals||0)+1; save('kt_hist',H); } setTimeout(()=>{ f.hidden=true; },900);
         try{ localStorage.setItem('kt_nick',by); }catch(e){} }
       catch(e){ $('propMsg').textContent='送れなかった'; $('propSend').disabled=false; }
     };
@@ -107183,7 +107210,7 @@ const DICTX=(function(){
     if(!/^[ぁ-んー]{2,8}$/.test(w)){ $('dpMsg').textContent='まず上で言葉を調べてから'; return; }
     if(DICT.has(w)||DICT.has(canon(w))){ $('dpMsg').textContent='その言葉はもう辞書にある'; $('dpApply').hidden=true; return; }
     const db=MP.db(); if(!db) return; $('dpSend').disabled=true;
-    try{ const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); await db.doc('proposals/'+id).set({w,d,note,by,t:Date.now(),status:'pending'}); $('dpMsg').textContent='送った！採用をお待ちください'; $('dpKanji').value=''; $('dpNote').value=''; setTimeout(()=>{ $('dpApply').hidden=true; $('dpSearch').value=''; $('dpSearchRes').innerHTML=''; },1200); try{ localStorage.setItem('kt_nick',by); }catch(e){} }
+    try{ const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); await db.doc('proposals/'+id).set({w,d,note,by,t:Date.now(),status:'pending'}); $('dpMsg').textContent='送った！採用をお待ちください'; { const H=Object.assign(histDefault(),load('kt_hist',{})); H.proposals=(H.proposals||0)+1; save('kt_hist',H); } $('dpKanji').value=''; $('dpNote').value=''; setTimeout(()=>{ $('dpApply').hidden=true; $('dpSearch').value=''; $('dpSearchRes').innerHTML=''; },1200); try{ localStorage.setItem('kt_nick',by); }catch(e){} }
     catch(e){ $('dpMsg').textContent='送れなかった：'+(e&&e.code||e); }
     $('dpSend').disabled=false;
   };
@@ -107433,7 +107460,7 @@ const QUEST=(function(){
   function pullR(minR){ const pool=CARDS.filter(c=>c.r>=minR); const r=pull(); return r.r>=minR?r:pool[Math.floor(Math.random()*pool.length)]; }
   function gacha(n){
     const cost=n===10?GACHA10_COST:GACHA_COST; if(bank()<cost){ el('qGachaMsg').textContent=`ポイントが足りない（${cost}pt必要）`; return; }
-    save('kt_bank',bank()-cost); q=Q(); q.pity=q.pity||0; const got=[];
+    save('kt_bank',bank()-cost); q=Q(); q.pity=q.pity||0; const got=[]; { const H=Object.assign(histDefault(),load('kt_hist',{})); H.gacha=(H.gacha||0)+n; save('kt_hist',H); }
     for(let k=0;k<n;k++){
       let c=pull();
       if(q.pity>=29 && c.r<3) c=pullR(3);                 // 天井：30回★3以上が出なければ確定
