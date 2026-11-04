@@ -119,9 +119,9 @@ input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px 
 .preview .fb.bad{color:var(--bad)}
 .preview .fb.dup{background:var(--warn);color:#1d2433}
 .boardwrap{position:relative;width:100%;max-width:380px;margin:0 auto;touch-action:none;user-select:none;-webkit-user-select:none}
-.board{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;aspect-ratio:1;max-width:100%}
+.board{display:grid;grid-template-columns:repeat(var(--n,4),minmax(0,1fr));gap:calc(8px * 4 / var(--n,4));aspect-ratio:1;max-width:100%}
 .tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--tile);border:1px solid var(--line);border-radius:14px;
-  font-family:var(--disp);font-weight:700;font-size:calc(clamp(26px,9vw,40px) * var(--scale));line-height:1;box-shadow:0 1px 0 var(--line);transition:background .08s,color .08s,transform .08s}
+  font-family:var(--disp);font-weight:700;font-size:calc(clamp(26px,9vw,40px) * var(--scale) * 4 / var(--n,4));line-height:1;box-shadow:0 1px 0 var(--line);transition:background .08s,color .08s,transform .08s}
 .tile .alt{font-size:.42em;font-weight:500;color:var(--muted);margin-top:4px;letter-spacing:.1em}
 .tile.sel{background:var(--tile-sel);color:var(--tile-sel-fg);border-color:var(--tile-sel);transform:scale(.96)}
 .tile.sel .alt{color:var(--tile-sel-fg);opacity:.8}
@@ -556,6 +556,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
     <h2 style="font-size:18px">CPUと対戦</h2>
     <div><label>ルール</label><div class="seg" id="cpuRule"><button data-v="normal">ふつう</button><button data-v="race">早い者勝ち</button><button data-v="territory">陣取り</button></div><p class="notice" id="cpuRuleDesc" style="margin:4px 0 0"></p></div>
     <div><label>CPUの人数</label><div class="seg" id="cpuN"><button data-v="1">1人</button><button data-v="2">2人</button><button data-v="3">3人</button></div></div>
+    <div><label>盤面の大きさ</label><div class="seg" id="cpuSize"><button data-v="4">4×4</button><button data-v="5">5×5</button><button data-v="6">6×6</button></div></div>
     <div><label>強さ</label><div class="seg" id="cpuLevel"><button data-v="easy">かんたん</button><button data-v="normal">ふつう</button><button data-v="hard">つよい</button><button data-v="oni">おに</button></div><p class="notice" style="margin:4px 0 0">かんたん：短い言葉をたまに。ふつう：4文字まで。つよい：6文字・★★まで、陣取りでは奪いにくる。おに：全部知っていて速い。</p></div>
     <div class="ctrls" style="justify-content:flex-start"><button class="primary" id="cpuStart">対戦スタート（120秒）</button></div>
   </div>
@@ -576,7 +577,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
     <div class="code" id="roomCode">----</div>
     <p class="notice" style="text-align:center;margin:0 0 12px">同じページを開いて、この合言葉で入ってもらう</p>
     <div class="players" id="playerList"></div>
-    <div style="margin-top:12px"><label class="small" style="font-weight:700;display:block;margin-bottom:4px">ルール</label><div class="seg" id="lobbyRule" hidden><button data-v="normal">ふつう</button><button data-v="race">早い者勝ち</button><button data-v="territory">陣取り</button></div><p class="notice" id="lobbyRuleView" hidden></p><p class="notice" id="lobbyRuleDesc" style="margin:4px 0 0"></p></div>
+    <div style="margin-top:12px"><label class="small" style="font-weight:700;display:block;margin-bottom:4px">ルール</label><div class="seg" id="lobbyRule" hidden><button data-v="normal">ふつう</button><button data-v="race">早い者勝ち</button><button data-v="territory">陣取り</button></div><p class="notice" id="lobbyRuleView" hidden></p><p class="notice" id="lobbyRuleDesc" style="margin:4px 0 0"></p><div class="seg" id="lobbySize" hidden style="margin-top:6px"><button data-v="4">4×4</button><button data-v="5">5×5</button><button data-v="6">6×6</button></div></div>
     <div class="row" style="margin-top:14px;justify-content:center">
       <button class="primary" id="btnStart" hidden>スタート（120秒）</button>
       <span class="notice" id="waitNote">主催者のスタートを待っています…</span>
@@ -106299,7 +106300,11 @@ function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt
 
 /* ---------- board ---------- */
 function tileChars(t){ if(t.stone||t.frozen) return []; const a=[t.base]; if(t.alts) a.push(...t.alts); if(SMALL[t.base]) a.push(SMALL[t.base]); return a; }
-const NEIGH = []; for(let i=0;i<16;i++){const r=i>>2,c=i&3,a=[];for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(!dr&&!dc)continue;const rr=r+dr,cc=c+dc;if(rr>=0&&rr<4&&cc>=0&&cc<4)a.push(rr*4+cc)}NEIGH.push(a)}
+// 盤面サイズ（4×4 / 5×5 / 6×6）
+let N=4, NN=16, NEIGH=[];
+function setBoardSize(n){ N=n; NN=n*n; NEIGH=[]; for(let i=0;i<NN;i++){const r=Math.floor(i/N),c=i%N,a=[];for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(!dr&&!dc)continue;const rr=r+dr,cc=c+dc;if(rr>=0&&rr<N&&cc>=0&&cc<N)a.push(rr*N+cc)}NEIGH.push(a)} for(const id of ['board','resBoard']){ const b=document.getElementById(id); if(b) b.style.setProperty('--n',n); } }
+setBoardSize(4);
+function ptOf(i){ const u=100/N; return `${(i%N)*u+u/2},${Math.floor(i/N)*u+u/2}`; }
 
 // 長い言葉（7〜8文字）を盤面に「仕込む」候補。濁点は1つまで、小さい字はそのまま大きい字のマスでよい
 let LONG_WORDS=null;
@@ -106308,7 +106313,7 @@ const UNSMALL={っ:'つ',ゃ:'や',ゅ:'ゆ',ょ:'よ'};
 const UNDAKU_T={が:'か',ぎ:'き',ぐ:'く',げ:'け',ご:'こ',ざ:'さ',じ:'し',ず:'す',ぜ:'せ',ぞ:'そ',だ:'た',ぢ:'ち',づ:'つ',で:'て',ど:'と',ば:'は',び:'ひ',ぶ:'ふ',べ:'へ',ぼ:'ほ',ぱ:'は',ぴ:'ひ',ぷ:'ふ',ぺ:'へ',ぽ:'ほ'};
 function randomPath(rand,len){
   for(let tries=0;tries<30;tries++){
-    const used=new Array(16).fill(false), path=[Math.floor(rand()*16)]; used[path[0]]=true;
+    const used=new Array(NN).fill(false), path=[Math.floor(rand()*NN)]; used[path[0]]=true;
     while(path.length<len){ const last=path[path.length-1]; const opts=NEIGH[last].filter(j=>!used[j]); if(!opts.length) break; const j=opts[Math.floor(rand()*opts.length)]; used[j]=true; path.push(j); }
     if(path.length===len) return path;
   }
@@ -106316,7 +106321,7 @@ function randomPath(rand,len){
 }
 function makeTiles(rand,plant){
   const tiles=[];
-  for(let i=0;i<16;i++){
+  for(let i=0;i<NN;i++){
     let x=rand()*WSUM, base='あ';
     for(const k of WKEYS){ x=x-WEIGHTS[k]; if(x<=0){base=k;break} }
     tiles.push({base});
@@ -106334,7 +106339,7 @@ function makeTiles(rand,plant){
   return tiles;
 }
 function solve(tiles){
-  const chars=tiles.map(tileChars), found=new Map(), used=new Array(16).fill(false);
+  const chars=tiles.map(tileChars), found=new Map(), used=new Array(NN).fill(false);
   function dfs(i,node,word,depth){
     used[i]=true;
     for(const ch of chars[i]){
@@ -106345,7 +106350,7 @@ function solve(tiles){
     }
     used[i]=false;
   }
-  for(let i=0;i<16;i++) dfs(i,TRIE,'',1);
+  for(let i=0;i<NN;i++) dfs(i,TRIE,'',1);
   return [...found.values()];
 }
 function makeBoard(seed){
@@ -106365,12 +106370,12 @@ function makeBoard(seed){
 
 /* ---------- path finder (結果画面でなぞり直す用) ---------- */
 function findPath(word){
-  const chars=G.tiles.map(tileChars), used=new Array(16).fill(false), path=[];
+  const chars=G.tiles.map(tileChars), used=new Array(NN).fill(false), path=[];
   function dfs(i,k){ if(!chars[i].includes(word[k])) return false; used[i]=true; path.push(i);
     if(k===word.length-1) return true;
     for(const j of NEIGH[i]) if(!used[j] && dfs(j,k+1)) return true;
     used[i]=false; path.pop(); return false; }
-  for(let i=0;i<16;i++) if(dfs(i,0)) return path.slice();
+  for(let i=0;i<NN;i++) if(dfs(i,0)) return path.slice();
   return null;
 }
 let traceTimer=null;
@@ -106388,7 +106393,7 @@ function traceWord(w){
   let k=0;
   (function step(){
     tiles[path[k]].classList.add('sel'); SND.tap(k+1);
-    const pts=path.slice(0,k+1).map(i=>`${(i&3)*25+12.5},${(i>>2)*25+12.5}`);
+    const pts=path.slice(0,k+1).map(ptOf);
     if(k>0) svg.innerHTML=`<path d="M${pts.join('L')}"/>`;
     k++; if(k<path.length) traceTimer=setTimeout(step,260);
   })();
@@ -106545,7 +106550,7 @@ function renderBoard(dists){
 }
 function drawLines(){
   const svg=$('lines'); if(G.path.length<2){ if(G.mode!=='tutorial') svg.innerHTML=''; else svg.querySelectorAll('path:not(.guide)').forEach(p=>p.remove()); return;}
-  const pts=G.path.map(i=>{const r=i>>2,c=i&3;return `${c*25+12.5},${r*25+12.5}`});
+  const pts=G.path.map(ptOf);
   svg.querySelectorAll('path:not(.guide)').forEach(p=>p.remove()); svg.insertAdjacentHTML('beforeend',`<path d="M${pts.join('L')}"/>`);
 }
 function updateSel(){
@@ -106580,13 +106585,13 @@ function bestWord(cands){
 /* ---------- input ---------- */
 let dragging=false, dragMoved=false, tapOnLast=false;
 function tileAt(x,y,loose){
-  const r=$('board').getBoundingClientRect(), cw=r.width/4, ch=r.height/4;
+  const r=$('board').getBoundingClientRect(), cw=r.width/N, ch=r.height/N;
   const c=Math.floor((x-r.left)/cw), row=Math.floor((y-r.top)/ch);
-  if(c<0||c>3||row<0||row>3) return -1;
-  if(loose) return row*4+c;
+  if(c<0||c>=N||row<0||row>=N) return -1;
+  if(loose) return row*N+c;
   // 中心の円の中だけ拾う（斜めに動かしても隣のマスを巻き込まない）
   const dx=(x-r.left)-(c+0.5)*cw, dy=(y-r.top)-(row+0.5)*ch, rad=Math.min(cw,ch)*SETTINGS.hit;
-  return (dx*dx+dy*dy<=rad*rad)?row*4+c:-1;
+  return (dx*dx+dy*dy<=rad*rad)?row*N+c:-1;
 }
 function tryAdd(i){
   if(i<0) return;
@@ -106696,6 +106701,7 @@ function startGame(mode,seed,opts){
   opts=opts||{};
   G.mode=mode; G.seed=seed; G.found=new Map(); G.foundCanon=new Map(); G.score=0; G.misses=[]; G.lockUntil=0; G.rejected=[]; G.path=[]; G.over=true; G.combo=0; G.lastOk=0;
   G.rule=opts.rule||(mode==='fall'?'fall':'normal'); G.maxCombo=0;
+  setBoardSize(opts.size||4);
   G.players=opts.players||[{id:'me',name:'あなた',cpu:null}]; G.claims={}; CPU.stop();
   const {tiles,words,rand}=makeBoard(seed);
   G.tiles=tiles; G.words=words; G.missions=G.rule==='fall'?[]:pickMissions(words,rand,tiles); G.par=boardPar(words); G.retry=!!opts.retry; G.cpuOpts=opts.cpuOpts||null;
@@ -106703,7 +106709,7 @@ function startGame(mode,seed,opts){
   const mb=$('mission'); mb.dataset.id=''; mb.className='mission'; mb.innerHTML=G.rule==='fall'?'<span class="txt muted">消えたマスの上から新しい字が落ちてくる。4秒以内に続けて決めるとコンボ。</span>':G.rule!=='normal'?`<span class="txt muted">${RULE_DESC[G.rule]}</span>`:'<span class="txt muted">ミッションは最初の60秒。満たす言葉は2倍。</span>';
   $('preview').textContent='　';
   const th=medalThresholds(G.par);
-  $('modeLabel').innerHTML=mode==='daily'?(G.retry?'きょうの16マス（練習）':`🥉${th[0]} 🥈${th[1]} 🥇${th[2]}`):mode==='multi'?`対戦 ${G.room?G.room.code:''}・${RULE_NAME[G.rule]}`:mode==='cpu'?`CPU対戦・${RULE_NAME[G.rule]}`:mode==='fall'?'落ちもの':'フリー';
+  $('modeLabel').innerHTML=mode==='daily'?(G.retry?'きょうの16マス（練習）':`🥉${th[0]} 🥈${th[1]} 🥇${th[2]}`):mode==='multi'?`対戦 ${G.room?G.room.code:''}・${RULE_NAME[G.rule]}・${N}×${N}`:mode==='cpu'?`CPU対戦・${RULE_NAME[G.rule]}・${N}×${N}`:mode==='fall'?'落ちもの':'フリー';
   $('btnGiveUp').hidden=(mode==='multi'); $('btnGiveUp').textContent='終了'; $('countdown').textContent='3';
   updateScoreUI(); show('vGame');
   const startAt=opts.startAt||Date.now()+3200;
@@ -106779,7 +106785,7 @@ const TUT=(function(){
   const MISSION={id:'tut',label:'「す」で始まる言葉',test:w=>w[0]==='す'};
   function start(){
     G.mode='tutorial'; G.seed=0; G.found=new Map(); G.foundCanon=new Map(); G.score=0; G.path=[]; G.over=true; G.retry=false;
-    G.rule='normal'; G.claims={}; G.players=[{id:'me',name:'あなた',cpu:null}]; CPU.stop(); $('vsPlayers').hidden=true; $('vsLog').hidden=true; $('statusBar').hidden=false; $('mission').hidden=false; $('found').hidden=false; $('questPanel').hidden=true; document.body.classList.remove('quest');
+    setBoardSize(4); G.rule='normal'; G.claims={}; G.players=[{id:'me',name:'あなた',cpu:null}]; CPU.stop(); $('vsPlayers').hidden=true; $('vsLog').hidden=true; $('statusBar').hidden=false; $('mission').hidden=false; $('found').hidden=false; $('questPanel').hidden=true; document.body.classList.remove('quest');
     G.tiles=TILES.map(t=>({...t})); G.words=solve(G.tiles); G.missions=[]; G.par=boardPar(G.words); step=0;
     renderBoard(); $('found').innerHTML=''; $('score').innerHTML='0<small>点</small>'; $('timer').textContent='練習'; $('timer').classList.remove('low');
     $('preview').textContent='　'; $('modeLabel').textContent='チュートリアル'; $('btnGiveUp').hidden=false; $('btnGiveUp').textContent='やめる';
@@ -106791,7 +106797,7 @@ const TUT=(function(){
     if(st.mission){ mb.dataset.id='tut'; mb.className='mission on'; mb.innerHTML=`<span class="tag">ミッション</span><span class="txt">${MISSION.label}</span><span class="x2">×2</span>`; }
     else { mb.dataset.id=''; mb.className='mission'; mb.innerHTML='<span class="txt muted">ミッションはあとで出てくる</span>'; }
     document.querySelectorAll('.tile').forEach(el=>{ const k=st.path?st.path.indexOf(+el.dataset.i):-1; el.classList.toggle('hint',k>=0); let b=el.querySelector('.hn'); if(k>=0){ if(!b){ b=document.createElement('span'); b.className='hn'; el.appendChild(b); } b.textContent=k+1; } else if(b) b.remove(); });
-    const svg=$('lines'); if(st.path&&st.path.length>1){ const pts=st.path.map(i=>`${(i&3)*25+12.5},${(i>>2)*25+12.5}`); svg.innerHTML=`<path class="guide" d="M${pts.join('L')}"/><circle class="guide-dot" r="2.2"><animateMotion dur="1.6s" repeatCount="indefinite" path="M${pts.join('L')}"/></circle>`; } else svg.innerHTML='';
+    const svg=$('lines'); if(st.path&&st.path.length>1){ const pts=st.path.map(ptOf); svg.innerHTML=`<path class="guide" d="M${pts.join('L')}"/><circle class="guide-dot" r="2.2"><animateMotion dur="1.6s" repeatCount="indefinite" path="M${pts.join('L')}"/></circle>`; } else svg.innerHTML='';
     if(st.done){ $('btnTutDone').onclick=()=>{ end(); startGame('free',(Math.random()*2**32)>>>0); }; }
   }
   function onWord(w){ const st=STEPS[step]; if(st.path && canon(w)===canon(st.word)){ step++; setTimeout(render,500); } }
@@ -106942,7 +106948,7 @@ const VS=(function(){
     const m=G.claims[pid]||{}; if(G.rule==='race'){ const w=winners(); return Object.entries(m).reduce((s,[c,v])=>s+(w[c]===pid?v.pts:0),0); }
     return Object.values(m).reduce((s,v)=>s+v.pts,0);
   }
-  function owners(){ const o=new Array(16).fill(null); if(G.rule!=='territory') return o; for(const cl of allClaims()) for(const i of (cl.path||[])) o[i]=cl.pid; return o; }
+  function owners(){ const o=new Array(NN).fill(null); if(G.rule!=='territory') return o; for(const cl of allClaims()) for(const i of (cl.path||[])) o[i]=cl.pid; return o; }
   function tilesOf(pid){ return owners().filter(x=>x===pid).length; }
   function paintOwners(board){
     const b=board||$('board'); if(!b) return; const o=owners();
@@ -106984,20 +106990,21 @@ const CPU=(function(){
   };
   const NAMES=['ロボ太','カナコ','ゴロー'];
   let timers=[], bots=[];
-  function openSetup(){ const o=load('kt_cpu',{rule:'normal',n:1,level:'normal'}); setupState=o; renderSetup(); show('vCpu'); }
+  function openSetup(){ const o=Object.assign({rule:'normal',n:1,level:'normal',size:4},load('kt_cpu',{})); setupState=o; renderSetup(); show('vCpu'); }
   let setupState=null;
   function renderSetup(){
     $('cpuRule').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===setupState.rule));
     $('cpuN').querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.v===setupState.n));
     $('cpuLevel').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===setupState.level));
+    $('cpuSize').querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.v===setupState.size));
     $('cpuRuleDesc').textContent=RULE_DESC[setupState.rule];
   }
-  for(const [id,key,num] of [['cpuRule','rule',0],['cpuN','n',1],['cpuLevel','level',0]]) $(id).addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; setupState[key]=num?+b.dataset.v:b.dataset.v; renderSetup(); });
+  for(const [id,key,num] of [['cpuRule','rule',0],['cpuN','n',1],['cpuLevel','level',0],['cpuSize','size',1]]) $(id).addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; setupState[key]=num?+b.dataset.v:b.dataset.v; renderSetup(); });
   $('cpuStart').onclick=()=>{ save('kt_cpu',setupState); SND.unlock(); launch(Object.assign({},setupState)); };
   function launch(o){
     o=o||load('kt_cpu',{rule:'normal',n:1,level:'normal'});
     const players=[{id:'me',name:'あなた',cpu:null}]; for(let k=0;k<o.n;k++) players.push({id:'cpu'+k,name:NAMES[k]+'（'+LEVELS[o.level].name+'）',cpu:o.level});
-    VS.reset(); startGame('cpu',(Math.random()*2**32)>>>0,{rule:o.rule,players,cpuOpts:o});
+    VS.reset(); startGame('cpu',(Math.random()*2**32)>>>0,{rule:o.rule,players,cpuOpts:o,size:o.size||4});
   }
   function start(){
     stop(); bots=[];
@@ -107034,11 +107041,11 @@ const FALL=(function(){
     const removed=new Set(path);
     let tiles=null,dists=null;
     for(let tryN=0;tryN<20;tryN++){
-      tiles=new Array(16); dists=new Array(16).fill(0);
-      for(let c=0;c<4;c++){
-        const keep=[]; for(let r=3;r>=0;r--){ const i=r*4+c; if(!removed.has(i)) keep.push({t:G.tiles[i],r}); }
-        let r=3; for(const k of keep){ tiles[r*4+c]=k.t; dists[r*4+c]=r-k.r; r--; }
-        let fresh=0; for(;r>=0;r--){ const t={base:pickKana()}; if(DAKU[t.base]&&Math.random()<0.06){ t.alts=[DAKU[t.base]]; if(HANDAKU[t.base]) t.alts.push(HANDAKU[t.base]); } tiles[r*4+c]=t; fresh++; dists[r*4+c]=r+fresh+1; }
+      tiles=new Array(NN); dists=new Array(NN).fill(0);
+      for(let c=0;c<N;c++){
+        const keep=[]; for(let r=N-1;r>=0;r--){ const i=r*N+c; if(!removed.has(i)) keep.push({t:G.tiles[i],r}); }
+        let r=N-1; for(const k of keep){ tiles[r*N+c]=k.t; dists[r*N+c]=r-k.r; r--; }
+        let fresh=0; for(;r>=0;r--){ const t={base:pickKana()}; if(DAKU[t.base]&&Math.random()<0.06){ t.alts=[DAKU[t.base]]; if(HANDAKU[t.base]) t.alts.push(HANDAKU[t.base]); } tiles[r*N+c]=t; fresh++; dists[r*N+c]=r+fresh+1; }
       }
       const words=solve(tiles); if(words.length>=12 || tryN===19){ G.words=words; break; }
     }
@@ -107081,7 +107088,8 @@ const MP=(function(){
     $('roomCode').textContent=room.code;
     const rule=room.rule||'normal'; myRule=rule;
     $('lobbyRule').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===rule));
-    $('lobbyRule').hidden=room.host!==uid; $('lobbyRuleView').hidden=room.host===uid; $('lobbyRuleView').textContent=`ルール：${RULE_NAME[rule]} — ${RULE_DESC[rule]}`; $('lobbyRuleDesc').textContent=RULE_DESC[rule];
+    $('lobbyRule').hidden=room.host!==uid; $('lobbyRuleView').hidden=room.host===uid; $('lobbyRuleView').textContent=`ルール：${RULE_NAME[rule]}・${room.size||4}×${room.size||4} — ${RULE_DESC[rule]}`; $('lobbyRuleDesc').textContent=RULE_DESC[rule];
+    $('lobbySize').hidden=room.host!==uid; $('lobbySize').querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.v===(room.size||4)));
     const ps=Object.entries(room.players||{}).sort((a,b)=>a[1].t-b[1].t);
     $('playerList').innerHTML=ps.map(([id,p])=>`<span class="pl${id===room.host?' host':''}${id===uid?' me':''}">${esc(p.name)}</span>`).join('');
     const isHost=room.host===uid;
@@ -107090,7 +107098,7 @@ const MP=(function(){
     if(room.status==='playing' && room.round!==lastRound){
       lastRound=room.round; $('lobbyEntry').hidden=true; $('lobbyRoom').hidden=false;
       const players=Object.entries(room.players||{}).sort((a,b)=>a[1].t-b[1].t).map(([id,p])=>({id,name:p.name,cpu:null}));
-      VS.reset(); startGame('multi',room.seed,{startAt:room.startAt,rule:room.rule||'normal',players});
+      VS.reset(); startGame('multi',room.seed,{startAt:room.startAt,rule:room.rule||'normal',players,size:room.size||4});
     } else if(room.status==='lobby' && lastStatus!=='lobby'){
       $('lobbyEntry').hidden=true; $('lobbyRoom').hidden=false; show('vLobby');
     }
@@ -107100,11 +107108,12 @@ const MP=(function(){
   }
   async function pushClaim(cl){ if(!room||!db) return; try{ await db.doc('rooms/'+room.code).update({claims:{[uid]:{[cl.c]:cl}}}); }catch(e){} }
   $('lobbyRule').addEventListener('click',async e=>{ const b=e.target.closest('button'); if(!b||!room||room.host!==uid) return; try{ await db.doc('rooms/'+room.code).update({rule:b.dataset.v}); }catch(e){} });
+  $('lobbySize').addEventListener('click',async e=>{ const b=e.target.closest('button'); if(!b||!room||room.host!==uid) return; try{ await db.doc('rooms/'+room.code).update({size:+b.dataset.v}); }catch(e){} });
   function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   async function create(){
     const code=code4(); err('');
     try{
-      await db.doc('rooms/'+code).set({host:uid,status:'lobby',round:0,seed:0,startAt:0,created:Date.now(),rule:'normal',players:{[uid]:{name:nick(),t:Date.now()}},results:{},claims:{}});
+      await db.doc('rooms/'+code).set({host:uid,status:'lobby',round:0,seed:0,startAt:0,created:Date.now(),rule:'normal',size:4,players:{[uid]:{name:nick(),t:Date.now()}},results:{},claims:{}});
       watch(code);
     }catch(e){ err('部屋を作れませんでした。共有の権限を確認してください。'); }
   }
@@ -107392,7 +107401,7 @@ const QUEST=(function(){
     q=Q(); const st=partyStats(q);
     B={d,floor:0,hpMax:st.hp,hp:st.hp,st,shield:0,turnTime:TURN_BASE+st.time,turns:0,dmgTotal:0,log:[],seed:seed||((Math.random()*2**32)>>>0),over:false,daily:!!d.daily};
     // 盤面はフリーと同じ生成、落ちものルール
-    G.mode='quest'; G.rule='fall'; G.players=[{id:'me',name:'あなた',cpu:null}]; G.claims={}; CPU.stop();
+    setBoardSize(4); G.mode='quest'; G.rule='fall'; G.players=[{id:'me',name:'あなた',cpu:null}]; G.claims={}; CPU.stop();
     G.found=new Map(); G.foundCanon=new Map(); G.score=0; G.misses=[]; G.lockUntil=0; G.rejected=[]; G.path=[]; G.over=true; G.combo=0; G.lastOk=0; G.maxCombo=0; G.missions=[]; G.retry=false;
     const {tiles,words}=makeBoard(B.seed); G.tiles=tiles; G.words=words; G.par=0;
     renderBoard(); el('found').innerHTML=''; el('found').hidden=true; el('vsLog').hidden=true; el('vsPlayers').hidden=true; el('preview').textContent='　';
@@ -107494,7 +107503,7 @@ const QUEST=(function(){
     damagePlayer(dmg,`${B.e.name}の攻撃`+(red?`（${red}%軽減）`:''));
     if(B.over) return;
     if(B.gims.includes('stone')){ const free=G.tiles.map((t,i)=>i).filter(i=>!G.tiles[i].stone); if(free.length>4){ const i=free[Math.floor(Math.random()*free.length)]; G.tiles[i]={base:'石',stone:3}; renderBoard(); } }
-    if(B.gims.includes('freeze')){ const r=Math.floor(Math.random()*3), c=Math.floor(Math.random()*3); for(const [dr,dc] of [[0,0],[0,1],[1,0],[1,1]]){ const t=G.tiles[(r+dr)*4+c+dc]; if(!t.stone) t.frozen=true; } renderBoard(); floatText('マスが凍った！ タップで解ける','muted'); }
+    if(B.gims.includes('freeze')){ const r=Math.floor(Math.random()*(N-1)), c=Math.floor(Math.random()*(N-1)); for(const [dr,dc] of [[0,0],[0,1],[1,0],[1,1]]){ const t=G.tiles[(r+dr)*N+c+dc]; if(!t.stone) t.frozen=true; } renderBoard(); floatText('マスが凍った！ タップで解ける','muted'); }
     renderQuest();
     setTimeout(nextTurn,500);
   }
