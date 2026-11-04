@@ -224,6 +224,20 @@ input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px 
 .lootpt{font-family:var(--px);font-size:32px;font-weight:900;color:var(--ink)}
 .lootpt small{font-size:14px}
 .loot .gcard{width:100%}
+/* ギミック表示 */
+.gbadges{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.gbadge{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border:2px solid var(--bad);color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--paper));border-radius:0;line-height:1.5;white-space:nowrap}
+.gline{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.gimcut{display:grid;gap:10px;font-size:.3em;line-height:1.3;text-align:center;padding:0 16px}
+.gimcut b{display:block;color:var(--bad);font-size:1.4em}
+.gimcut small{display:block;font-size:.75em;color:var(--fg);font-family:var(--px)}
+.bar.sh i{background-color:#8a93a8}
+body.quest .tile.weak{border-color:var(--gold);box-shadow:3px 3px 0 var(--gold),inset 0 0 0 3px var(--gold)}
+body.quest .tile.weak::after{content:"弱点";position:absolute;top:2px;right:4px;font-size:10px;color:var(--gold);font-weight:900}
+body.quest .tile.seal{color:var(--muted);background:color-mix(in srgb,var(--bad) 12%,var(--tile))}
+body.quest .tile.seal::after{content:"×";position:absolute;inset:0;display:grid;place-items:center;font-size:1.6em;color:var(--bad);opacity:.75;font-weight:900}
+body.quest .tile.frozen{background:#cfeeff;color:#6aa3c7;border-color:#7cc4ee}
+body.quest .tile.frozen::after{content:"❄";position:absolute;top:2px;right:5px;font-size:12px;color:#4a8fc0}
 .qslots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .qslots .qc.big{grid-template-columns:1fr;justify-items:center;text-align:center;min-height:96px;width:100%;cursor:pointer}
 .qslots .qc.big b{grid-row:auto;width:34px;height:34px;font-size:18px}
@@ -106284,7 +106298,7 @@ function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a
 function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 
 /* ---------- board ---------- */
-function tileChars(t){ if(t.stone) return []; const a=[t.base]; if(t.alts) a.push(...t.alts); if(SMALL[t.base]) a.push(SMALL[t.base]); return a; }
+function tileChars(t){ if(t.stone||t.frozen) return []; const a=[t.base]; if(t.alts) a.push(...t.alts); if(SMALL[t.base]) a.push(SMALL[t.base]); return a; }
 const NEIGH = []; for(let i=0;i<16;i++){const r=i>>2,c=i&3,a=[];for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(!dr&&!dc)continue;const rr=r+dr,cc=c+dc;if(rr>=0&&rr<4&&cc>=0&&cc<4)a.push(rr*4+cc)}NEIGH.push(a)}
 
 // 長い言葉（7〜8文字）を盤面に「仕込む」候補。濁点は1つまで、小さい字はそのまま大きい字のマスでよい
@@ -106524,6 +106538,7 @@ function renderBoard(dists){
     d.innerHTML=`<span>${t.base}</span>`+(t.alts?`<span class="alt">${t.alts.join('')}</span>`:'');
     if(dists&&dists[i]>0){ d.style.setProperty('--d',dists[i]); d.classList.add('fall'); }
     if(t.stone) d.classList.add('stone');
+    if(G.mode==='quest') QUEST.decorateTile(d,t);
     b.appendChild(d);
   });
   drawLines(); VS.paintOwners();
@@ -106586,6 +106601,7 @@ const bw=$('boardwrap');
 bw.addEventListener('pointerdown',e=>{
   if(G.over||Date.now()<G.lockUntil) return;
   const i=tileAt(e.clientX,e.clientY,true); if(i<0) return;
+  if(G.mode==='quest'&&QUEST.tapTile(i)){ e.preventDefault(); return; }
   e.preventDefault(); SND.unlock(); bw.setPointerCapture(e.pointerId); dragging=true; dragMoved=false;
   const last=G.path[G.path.length-1];
   tapOnLast=(G.path.length>0 && i===last);
@@ -106886,7 +106902,7 @@ function achievements(H,all){
     ['機械に勝利','CPUに勝つ',cpuAny>=1],['鬼退治','「おに」に勝つ',(cw.oni||0)>=1],['鬼の宿敵','「おに」に10回勝つ',(cw.oni||0)>=10],
     ['対戦デビュー','みんなで対戦を遊ぶ',(H.multiGames||0)>=1],['初勝利','対戦（つよい以上のCPUか人）で1位',(H.multiWins||0)>=1],['常勝','対戦で5回1位',(H.multiWins||0)>=5],['無敗の王','対戦で20回1位',(H.multiWins||0)>=20],
     // クエスト
-    ['冒険のはじまり','はじまりの森をクリア',!!(Qd.cleared||{}).d1],['洞窟探検家','ことばの洞窟をクリア',!!(Qd.cleared||{}).d2],['沼を越えて','濁音の沼をクリア',!!(Qd.cleared||{}).d3],['塔の覇者','竜の塔をクリア',!!(Qd.cleared||{}).d4],
+    ['冒険のはじまり','はじまりの森をクリア',!!(Qd.cleared||{}).d1],['洞窟探検家','ことばの洞窟をクリア',!!(Qd.cleared||{}).d2],['沼を越えて','濁音の沼をクリア',!!(Qd.cleared||{}).d3],['書庫の司書','言霊の書庫をクリア',!!(Qd.cleared||{}).d4],['氷を砕く者','氷の城をクリア',!!(Qd.cleared||{}).d5],['沈黙を破る者','静寂の神殿をクリア',!!(Qd.cleared||{}).d6],['砦を落とす者','鉄の砦をクリア',!!(Qd.cleared||{}).d7],['塔の覇者','竜の塔をクリア',!!(Qd.cleared||{}).d8],['魔王を討つ者','魔王城をクリア',!!(Qd.cleared||{}).d9],
     ['日課の冒険者','きょうのダンジョンを5回クリア',qDaily>=5],['ガチャ初心者','ガチャを引く',(H.gacha||0)>=1],['ガチャ中毒','ガチャを50回引く',(H.gacha||0)>=50],['虹を引いた','★★★★を手に入れる',has4],
     // 辞書
     ['辞書に一石','みんなの辞書に申請する',(H.proposals||0)>=1],
@@ -107303,15 +107319,42 @@ const QUEST=(function(){
   const ENEMY={
     slime:{name:'スライム',em:'🟢'},bat:{name:'コウモリ',em:'🦇'},goblin:{name:'ゴブリンの長',em:'👺'},orc:{name:'オーク',em:'🐗'},mimic:{name:'ミミック',em:'📦'},
     golem:{name:'ゴーレム',em:'🗿'},lizard:{name:'リザードマン',em:'🦎'},delf:{name:'ダークエルフ',em:'🧝'},cerb:{name:'ケルベロス',em:'🐕'},lich:{name:'リッチ',em:'💀'},
-    hydra:{name:'ヒドラ',em:'🐍'},wyvern:{name:'ワイバーン',em:'🦅'},mage:{name:'魔導兵',em:'🛡️'},dragonkin:{name:'竜人',em:'🐲'},ancient:{name:'古竜',em:'🐉'},demon:{name:'魔王',em:'😈'},
+    hydra:{name:'ヒドラ',em:'🐍'},wyvern:{name:'ワイバーン',em:'🦅'},mage:{name:'魔導兵',em:'🧙'},dragonkin:{name:'竜人',em:'🐲'},ancient:{name:'古竜',em:'🐉'},demon:{name:'魔王',em:'😈'},
+    owl:{name:'ふくろう賢者',em:'🦉'},ghost:{name:'書庫の亡霊',em:'👻'},fairy:{name:'いたずら妖精',em:'🧚'},book:{name:'禁書',em:'📕'},
+    wolf:{name:'氷狼',em:'🐺'},yeti:{name:'雪男',em:'⛄'},icewitch:{name:'氷の魔女',em:'🧊'},icedragon:{name:'氷竜',em:'❄️'},
+    monk:{name:'沈黙の僧',em:'🧘'},eye:{name:'監視の目',em:'👁️'},guardian:{name:'神殿の守護者',em:'🗿'},sphinx:{name:'スフィンクス',em:'🦁'},
+    soldier:{name:'砦の兵士',em:'⚔️'},archer:{name:'弓兵',em:'🏹'},knight:{name:'鉄騎士',em:'🛡️'},cannon:{name:'大砲',em:'💣'},general:{name:'砦の将軍',em:'🎖️'},
+    kraken:{name:'クラーケン',em:'🐙'},phoenix:{name:'不死鳥',em:'🔥'},dknight:{name:'魔王軍の騎士',em:'⚜️'},overlord:{name:'大魔王',em:'👑'},
   };
-  const GIM={noShort:'3文字以下の言葉は効かない',armor:'4文字未満の言葉はダメージ30%減',poison:'毎ターンHP3%減る',stone:'攻撃のたびにマスを1つ石にする',haste:'1ターンの時間−5秒'};
+  const GIM={
+    noShort:{n:'短剣無効',d:'3文字以下の言葉は効かない'},
+    armor:{n:'装甲',d:'4文字未満の言葉はダメージ30%減'},
+    poison:{n:'毒',d:'毎ターンHPが3%減る'},
+    stone:{n:'石化',d:'敵の攻撃のたびにマスが1つ石になる'},
+    haste:{n:'加速',d:'1ターンの時間が5秒短い'},
+    weak:{n:'弱点文字',d:'その字で始まる言葉はダメージ2倍（盤面に金の印）'},
+    seal:{n:'封印の文字',d:'その字を含む言葉は効かない。3ターンごとに別の字へ移る'},
+    even:{n:'偶数の呪い',d:'文字数が偶数の言葉しか効かない'},
+    odd:{n:'奇数の呪い',d:'文字数が奇数の言葉しか効かない'},
+    rapid:{n:'連撃',d:'毎ターン攻撃してくる（威力は低め）'},
+    regen:{n:'再生',d:'毎ターン敵のHPが5%回復する'},
+    freeze:{n:'凍結',d:'敵の攻撃で2×2のマスが凍る。凍ったマスは1回タップすると解ける'},
+    silence:{n:'沈黙',d:'カードの技が使えない。素の攻撃力だけで戦う'},
+    shieldwall:{n:'盾役',d:'まず盾を壊す必要がある。盾は4文字以上の言葉でしか削れない'},
+  };
   const DUNGEONS=[
-    {id:'d1',name:'はじまりの森',desc:'まずはここから。',reward:150,floors:[{e:'slime',hp:40,atk:8,every:3},{e:'bat',hp:60,atk:10,every:2},{e:'goblin',hp:130,atk:16,every:3,boss:1}]},
-    {id:'d2',name:'ことばの洞窟',desc:'短い言葉が通じない相手も。',reward:300,floors:[{e:'orc',hp:120,atk:18,every:3},{e:'mimic',hp:100,atk:14,every:2,g:'noShort'},{e:'golem',hp:200,atk:22,every:4,g:'armor'},{e:'lizard',hp:280,atk:26,every:3,boss:1}]},
-    {id:'d3',name:'濁音の沼',desc:'毒と石化。回復役がほしい。',reward:500,floors:[{e:'delf',hp:220,atk:28,every:3,g:'poison'},{e:'cerb',hp:260,atk:34,every:2},{e:'lich',hp:320,atk:30,every:3,g:'stone'},{e:'hydra',hp:450,atk:38,every:3,g:'haste',boss:1}]},
-    {id:'d4',name:'竜の塔',desc:'5階建て。★★★がいないと厳しい。',reward:800,floors:[{e:'wyvern',hp:320,atk:36,every:2},{e:'mage',hp:360,atk:40,every:3,g:'armor'},{e:'dragonkin',hp:420,atk:44,every:3,g:'noShort'},{e:'ancient',hp:550,atk:50,every:3,g:'stone'},{e:'demon',hp:750,atk:56,every:3,g:'haste',g2:'poison',boss:1}]},
+    {id:'d1',name:'はじまりの森',reward:150,floors:[{e:'slime',hp:40,atk:8,every:3},{e:'bat',hp:60,atk:10,every:2},{e:'goblin',hp:130,atk:16,every:3,boss:1}]},
+    {id:'d2',name:'ことばの洞窟',reward:300,floors:[{e:'orc',hp:120,atk:18,every:3},{e:'mimic',hp:100,atk:14,every:2,g:'noShort'},{e:'golem',hp:200,atk:22,every:4,g:'armor'},{e:'lizard',hp:280,atk:26,every:3,g:'weak',boss:1}]},
+    {id:'d3',name:'濁音の沼',reward:500,floors:[{e:'delf',hp:220,atk:28,every:3,g:'poison'},{e:'cerb',hp:240,atk:14,every:1,g:'rapid'},{e:'lich',hp:320,atk:30,every:3,g:'stone'},{e:'hydra',hp:420,atk:38,every:3,g:'haste',g2:'regen',boss:1}]},
+    {id:'d4',name:'言霊の書庫',reward:650,floors:[{e:'owl',hp:260,atk:30,every:3,g:'weak'},{e:'ghost',hp:300,atk:32,every:3,g:'seal'},{e:'fairy',hp:320,atk:34,every:2,g:'odd'},{e:'book',hp:480,atk:40,every:3,g:'seal',g2:'weak',boss:1}]},
+    {id:'d5',name:'氷の城',reward:800,floors:[{e:'wolf',hp:300,atk:34,every:2,g:'freeze'},{e:'yeti',hp:360,atk:38,every:3,g:'regen'},{e:'icewitch',hp:400,atk:40,every:3,g:'freeze',g2:'haste'},{e:'icedragon',hp:560,atk:46,every:3,g:'freeze',g2:'regen',boss:1}]},
+    {id:'d6',name:'静寂の神殿',reward:900,floors:[{e:'monk',hp:340,atk:36,every:3,g:'silence'},{e:'eye',hp:380,atk:38,every:3,g:'even'},{e:'guardian',hp:440,atk:42,every:4,g:'silence',g2:'armor'},{e:'sphinx',hp:600,atk:48,every:3,g:'odd',g2:'silence',boss:1}]},
+    {id:'d7',name:'鉄の砦',reward:1100,floors:[{e:'soldier',hp:380,atk:18,every:1,g:'rapid'},{e:'archer',hp:400,atk:20,every:1,g:'rapid'},{e:'knight',hp:460,atk:44,every:3,g:'shieldwall'},{e:'cannon',hp:500,atk:50,every:4,g:'haste'},{e:'general',hp:700,atk:26,every:1,g:'shieldwall',g2:'rapid',boss:1}]},
+    {id:'d8',name:'竜の塔',reward:1200,floors:[{e:'wyvern',hp:400,atk:40,every:2},{e:'mage',hp:440,atk:44,every:3,g:'armor'},{e:'dragonkin',hp:500,atk:48,every:3,g:'noShort'},{e:'ancient',hp:640,atk:54,every:3,g:'stone'},{e:'demon',hp:850,atk:60,every:3,g:'haste',g2:'poison',boss:1}]},
+    {id:'d9',name:'魔王城',reward:1500,floors:[{e:'kraken',hp:520,atk:48,every:3,g:'freeze'},{e:'phoenix',hp:560,atk:24,every:1,g:'regen',g2:'rapid'},{e:'lich',hp:620,atk:52,every:3,g:'seal'},{e:'dknight',hp:700,atk:56,every:3,g:'shieldwall',g2:'silence'},{e:'ancient',hp:780,atk:58,every:3,g:'stone',g2:'even'},{e:'overlord',hp:1000,atk:64,every:3,g:'weak',g2:'regen',g3:'haste',boss:1}]},
   ];
+  function floorGims(f){ return [f.g,f.g2,f.g3].filter(Boolean); }
+  function gimTag(g){ return `<span class="gbadge">⚠ ${GIM[g].n}</span>`; }
   const STARTERS=['c01','c04','c05'];
   const TURN_BASE=20;
 
@@ -107358,11 +107401,25 @@ const QUEST=(function(){
     loadFloor(true);
   }
   function enemyOf(f){ return Object.assign({},ENEMY[f.e],f); }
+  function pickChar(filter){ const bases=[...new Set(G.tiles.filter(t=>!t.stone&&!t.frozen).map(t=>t.base))].filter(b=>b!=='ー'); const ok=bases.filter(b=>filter(b)); const pool=ok.length?ok:bases; return pool[Math.floor(Math.random()*pool.length)]||'あ'; }
+  function startsW(w,b){ const c=w[0]; return c===b||c===DAKU[b]||c===HANDAKU[b]||c===SMALL[b]; }
+  function hasC(w,b){ return [...w].some(c=>c===b||c===DAKU[b]||c===HANDAKU[b]||c===SMALL[b]); }
+  function pickWeak(){ B.weak=pickChar(b=>G.words.filter(w=>startsW(w,b)).length>=3); }
+  function pickSeal(){ B.seal=pickChar(b=>b!==B.seal&&G.words.filter(w=>hasC(w,b)).length>=2); B.sealT=3; }
   function loadFloor(first){
-    const f=B.d.floors[B.floor]; B.e=enemyOf(f); B.ehp=f.hp; B.cnt=f.every; B.gims=[f.g,f.g2].filter(Boolean);
+    const f=B.d.floors[B.floor]; B.e=enemyOf(f); B.ehp=f.hp; B.cnt=f.every; B.gims=floorGims(f);
+    B.weak=null; B.seal=null; B.sh=0; G.tiles.forEach(t=>{ delete t.frozen; });
+    if(B.gims.includes('weak')) pickWeak();
+    if(B.gims.includes('seal')) pickSeal();
+    if(B.gims.includes('shieldwall')) B.sh=Math.round(f.hp*0.4);
+    renderBoard();
     const cd=el('countdown'); cd.innerHTML=`<span style="font-size:.4em;text-align:center;line-height:1.3">${B.floor+1}階<br>${B.e.em} ${B.e.name}${f.boss?'（ボス）':''}</span>`; cd.hidden=false;
     renderQuest();
-    setTimeout(()=>{ cd.hidden=true; cd.textContent='3'; G.over=false; nextTurn(); },first?1600:1300);
+    const t1=first?1500:1200;
+    if(B.gims.length){
+      setTimeout(()=>{ cd.innerHTML=`<div class="gimcut">${B.gims.map(g=>`<div><b>⚠ ${GIM[g].n}</b><small>${GIM[g].d}</small></div>`).join('')}</div>`; },t1);
+      setTimeout(()=>{ cd.hidden=true; cd.textContent='3'; G.over=false; nextTurn(); },t1+1500+600*(B.gims.length-1));
+    } else setTimeout(()=>{ cd.hidden=true; cd.textContent='3'; G.over=false; nextTurn(); },t1);
   }
   function turnSeconds(){ return Math.max(8,B.turnTime-(B.gims.includes('haste')?5:0)); }
   function nextTurn(){
@@ -107370,8 +107427,10 @@ const QUEST=(function(){
     B.turns++;
     // 毒・再生・石の解除
     if(B.gims.includes('poison')){ damagePlayer(Math.ceil(B.hpMax*0.03),'毒'); if(B.over) return; }
-    if(B.st.regen){ heal(B.st.regen); }
-    let changed=false; for(const t of G.tiles){ if(t.stone){ if(--t.stone<=0){ delete t.stone; t.base=FALL.pickKana(); changed=true; } } }
+    if(B.st.regen&&!B.gims.includes('silence')){ heal(B.st.regen); }
+    if(B.gims.includes('regen')&&B.turns>1){ const n=Math.round(B.e.hp*0.05); if(B.ehp<B.e.hp){ B.ehp=Math.min(B.e.hp,B.ehp+n); floatText(`${B.e.name}が${n}回復`,'muted'); } }
+    let changed=false;
+    if(B.seal&&B.turns>1){ if(--B.sealT<=0){ pickSeal(); changed=true; floatText(`封印が「${B.seal}」に移った`,'muted'); } } for(const t of G.tiles){ if(t.stone){ if(--t.stone<=0){ delete t.stone; t.base=FALL.pickKana(); changed=true; } } }
     if(changed) renderBoard();
     G.over=false;
     B.turnEnd=Date.now()+turnSeconds()*1000;
@@ -107391,18 +107450,25 @@ const QUEST=(function(){
     if(!B||B.over) return;
     clearInterval(turnTimer); G.over=true;
     const ctx={combo:G.combo};
-    let mult=B.st.all, notes=[];
-    for(const c of partyCards(q)){
+    const silenced=B.gims.includes('silence');
+    let mult=silenced?1:B.st.all, notes=[];
+    if(!silenced) for(const c of partyCards(q)){
       if(!c.sk||!cond(c.sk.c,w,ctx)) continue;
       if(c.sk.e==='mult'){ let v=c.sk.v; if(c.id==='c30'&&w.length>=7) v=4; mult*=v; notes.push(`${c.name} ×${v}`); }
       else if(c.sk.e==='heal'){ heal(c.sk.v); notes.push(`${c.name} 回復`); }
       else if(c.sk.e==='shield'){ B.shield=Math.max(B.shield,c.sk.v); notes.push(`${c.name} 防御`); }
     }
+    if(B.weak&&startsW(w,B.weak)){ mult*=2; notes.push(`弱点「${B.weak}」×2`); }
     let dmg=Math.round(pts*B.st.atk/10*mult);
     if(B.gims.includes('noShort')&&w.length<=3){ dmg=0; notes.push('短すぎて効かない'); }
     if(B.gims.includes('armor')&&w.length<4){ dmg=Math.round(dmg*0.7); notes.push('装甲で減少'); }
+    if(B.seal&&hasC(w,B.seal)){ dmg=0; notes.push(`封印「${B.seal}」を含む`); }
+    if(B.gims.includes('even')&&w.length%2!==0){ dmg=0; notes.push('偶数の呪い'); }
+    if(B.gims.includes('odd')&&w.length%2!==1){ dmg=0; notes.push('奇数の呪い'); }
+    let shieldHit=false;
+    if(B.sh>0){ if(w.length>=4){ const d2=Math.min(B.sh,dmg); B.sh-=d2; shieldHit=true; notes.push(`盾に${d2}`); dmg=0; if(B.sh<=0) notes.push('盾を壊した！'); } else { if(dmg>0) notes.push('盾に弾かれた（4文字以上で）'); dmg=0; } }
     B.ehp=Math.max(0,B.ehp-dmg); B.dmgTotal+=dmg;
-    floatText(dmg?`${dmg} ダメージ！`:'効かない…', dmg?'dmg':'muted', notes.join('・'));
+    floatText(dmg?`${dmg} ダメージ！`:shieldHit?'盾を削った':'効かない…', dmg||shieldHit?'dmg':'muted', notes.join('・'));
     if(dmg>0) SND.ok(Math.min(pts,20));
     renderQuest();
     if(B.ehp<=0){ enemyDown(); return; }
@@ -107423,6 +107489,7 @@ const QUEST=(function(){
     damagePlayer(dmg,`${B.e.name}の攻撃`+(red?`（${red}%軽減）`:''));
     if(B.over) return;
     if(B.gims.includes('stone')){ const free=G.tiles.map((t,i)=>i).filter(i=>!G.tiles[i].stone); if(free.length>4){ const i=free[Math.floor(Math.random()*free.length)]; G.tiles[i]={base:'石',stone:3}; renderBoard(); } }
+    if(B.gims.includes('freeze')){ const r=Math.floor(Math.random()*3), c=Math.floor(Math.random()*3); for(const [dr,dc] of [[0,0],[0,1],[1,0],[1,1]]){ const t=G.tiles[(r+dr)*4+c+dc]; if(!t.stone) t.frozen=true; } renderBoard(); floatText('マスが凍った！ タップで解ける','muted'); }
     renderQuest();
     setTimeout(nextTurn,500);
   }
@@ -107439,7 +107506,7 @@ const QUEST=(function(){
   function renderQuest(){
     if(!B) return;
     const f=B.d.floors[B.floor]||B.d.floors[B.d.floors.length-1];
-    el('qEnemy').innerHTML=`<span class="qem">${B.e.em}</span><div class="qinfo"><div><b>${B.e.name}</b> <small class="muted">${B.floor+1}/${B.d.floors.length}階${f.boss?'・ボス':''}</small></div><div class="bar hp"><i style="width:${B.ehp/B.e.hp*100}%"></i></div><small class="muted">HP ${B.ehp} / ${B.e.hp}${B.gims.length?'　'+B.gims.map(g=>'⚠ '+GIM[g]).join('　'):''}</small></div><div class="qcnt${B.cnt<=1?' soon':''}"><small>攻撃まで</small><b>${B.cnt}</b></div>`;
+    el('qEnemy').innerHTML=`<span class="qem">${B.e.em}</span><div class="qinfo"><div><b>${B.e.name}</b> <small class="muted">${B.floor+1}/${B.d.floors.length}階${f.boss?'・ボス':''}</small></div><div class="bar hp"><i style="width:${B.ehp/B.e.hp*100}%"></i></div><small class="muted">HP ${B.ehp} / ${B.e.hp}</small>${B.sh>0?`<div class="bar sh"><i style="width:${B.sh/(B.e.hp*0.4)*100}%"></i></div><small class="muted">盾 ${B.sh}（4文字以上で削れる）</small>`:''}${B.gims.length?`<div class="gbadges">${B.gims.map(g=>`<span class="gbadge" title="${GIM[g].d}">⚠ ${GIM[g].n}${g==='weak'&&B.weak?`「${B.weak}」`:g==='seal'&&B.seal?`「${B.seal}」あと${B.sealT}`:''}</span>`).join('')}</div>`:''}</div><div class="qcnt${B.cnt<=1?' soon':''}"><small>攻撃まで</small><b>${B.cnt}</b></div>`;
     el('qParty').innerHTML=`<div class="qcards">${partyCards(q).map(c=>`<span class="qc r${c.r}" title="${c.sk?c.sk.d:''}"><b>${c.k}</b>${c.name}</span>`).join('')}</div><div class="bar php"><i style="width:${B.hp/B.hpMax*100}%"></i></div><small class="muted">HP ${B.hp} / ${B.hpMax}　攻撃力 ${B.st.atk}${B.shield?'　🛡'+B.shield+'%':''}</small>`;
   }
   function finish(win){
@@ -107493,10 +107560,10 @@ const QUEST=(function(){
   function dailyDungeon(){
     const key=todayKey(), rand=mulberry32(hashStr('quest-'+key));
     const pool=['slime','bat','goblin','orc','mimic','golem','lizard','delf','cerb','lich','hydra','wyvern','mage','dragonkin'];
-    const gims=[null,null,'noShort','armor','poison','stone','haste'];
+    const gims=[null,null,'noShort','armor','poison','stone','haste','weak','seal','even','odd','regen','freeze','silence','rapid','weak'];
     const floors=[]; const daysSince=Math.max(0,Math.round((Date.parse(key)-Date.parse(LAUNCH))/86400e3));
     const scale=1+Math.min(1,daysSince/60)*0.5; // 2ヶ月かけて少し強く
-    for(let k=0;k<4;k++){ const e=pool[Math.floor(rand()*pool.length)]; const base=90+k*70; floors.push({e,hp:Math.round(base*scale*(0.9+rand()*0.3)),atk:Math.round((16+k*8)*scale),every:2+Math.floor(rand()*2),g:k>=1?gims[Math.floor(rand()*gims.length)]:undefined,boss:k===3?1:0}); }
+    for(let k=0;k<4;k++){ const e=pool[Math.floor(rand()*pool.length)]; const base=90+k*70; const g=k>=1?gims[Math.floor(rand()*gims.length)]:undefined; const rapid=g==='rapid'; floors.push({e,hp:Math.round(base*scale*(0.9+rand()*0.3)),atk:Math.round((16+k*8)*scale*(rapid?0.45:1)),every:rapid?1:2+Math.floor(rand()*2),g,boss:k===3?1:0}); }
     return {id:'daily',name:`きょうのダンジョン（${key}）`,desc:'日替わり4階。残りHPでメダル。報酬は1日1回。',reward:300,floors,daily:true};
   }
 
@@ -107542,7 +107609,7 @@ const QUEST=(function(){
     el('qParty2').innerHTML=q.party.map(id=>{ const c=CARD_BY[id]; return `<span class="qc r${c.r}"><b>${c.k}</b>${c.name}</span>`; }).join('');
     el('qPartyStat').textContent=statText(st);
     const dd=dailyDungeon(); const today=q.daily[todayKey()];
-    el('qDungeons').innerHTML=[dd,...DUNGEONS].map(d=>`<button class="mode qd" data-id="${d.id}"><span class="ico">${d.daily?'日':ENEMY[d.floors[d.floors.length-1].e].em}</span><div><b>${d.name}</b>${d.daily?(today?`<span class="chip" style="color:var(--gold)">今日 ${MEDAL[today.medal]} 残HP${today.hp}%</span>`:''):(q.cleared[d.id]?'<span class="chip" style="color:var(--ok)">クリア済</span>':'')}<span>${d.floors.length}階・報酬 ${d.reward}pt${!d.daily&&!q.cleared[d.id]?'（初回2倍）':''}</span><span class="muted">${d.floors.map(f=>ENEMY[f.e].em).join(' ')}</span></div></button>`).join('');
+    el('qDungeons').innerHTML=[dd,...DUNGEONS].map(d=>`<button class="mode qd" data-id="${d.id}"><span class="ico">${d.daily?'日':ENEMY[d.floors[d.floors.length-1].e].em}</span><div><b>${d.name}</b>${d.daily?(today?`<span class="chip" style="color:var(--gold)">今日 ${MEDAL[today.medal]} 残HP${today.hp}%</span>`:''):(q.cleared[d.id]?'<span class="chip" style="color:var(--ok)">クリア済</span>':'')}<span>${d.floors.length}階・報酬 ${d.reward}pt${!d.daily&&!q.cleared[d.id]?'（初回2倍）':''}</span><span class="muted">${d.floors.map(f=>ENEMY[f.e].em).join(' ')}</span>${d.floors.some(f=>floorGims(f).length)?`<span class="gline">${d.floors.map((f,k)=>floorGims(f).length?`<span class="gbadge">⚠ ${k+1}階 ${floorGims(f).map(g=>GIM[g].n).join('・')}</span>`:'').join('')}</span>`:''}</div></button>`).join('');
   }
   /* ---- 編成画面 ---- */
   let pickSlot=0;
@@ -107564,7 +107631,9 @@ const QUEST=(function(){
   el('qDungeons').addEventListener('click',e=>{ const b=e.target.closest('.qd'); if(!b) return; SND.unlock(); const id=b.dataset.id; const d=id==='daily'?dailyDungeon():DUNGEONS.find(x=>x.id===id); startDungeon(d,id==='daily'?hashStr('questboard-'+todayKey()):undefined); });
   el('qGacha1').onclick=()=>gacha(1); el('qGacha10').onclick=()=>gacha(10);
   el('mQuest').onclick=openHome;
-  return {openHome,onWord,abort,addBank,bank,active:()=>!!B&&!B.over,_debugClear:()=>{ B={d:DUNGEONS[0],turns:7,dmgTotal:300,hp:200,hpMax:330,over:true,floor:3}; q=Q(); showClear({reward:300,medal:0,first:true,gift:true}); }};
+  function decorateTile(d,t){ if(!B) return; d.classList.remove('weak','seal','frozen'); if(t.frozen) d.classList.add('frozen'); else { if(B.weak&&t.base===B.weak) d.classList.add('weak'); if(B.seal&&t.base===B.seal) d.classList.add('seal'); } }
+  function tapTile(i){ const t=G.tiles[i]; if(t&&t.frozen){ delete t.frozen; SND.tap(2); G.path=[]; renderBoard(); updateSel(); return true; } return false; }
+  return {openHome,onWord,abort,addBank,bank,decorateTile,tapTile,active:()=>!!B&&!B.over,_debugClear:()=>{ B={d:DUNGEONS[0],turns:7,dmgTotal:300,hp:200,hpMax:330,over:true,floor:3}; q=Q(); showClear({reward:300,medal:0,first:true,gift:true}); }};
 })();
 
 window.KT_DEBUG={G,VS,CPU,QUEST,baseScore,wordTier};
