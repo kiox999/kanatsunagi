@@ -455,7 +455,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
     <ul>
       <li>となりのマスをなぞって言葉を作る。ななめもOK。</li>
       <li>「つ・や・ゆ・よ・あ〜お」は小さい字としても読める。「か/が」のマスはどちらで読んでもいい。</li>
-      <li>長い言葉ほど高得点（2字1点・3字2点・4字5点・5字9点・6字14点・7字20点・8字28点）。小さい字・濁点・伸ばし棒を使うとボーナス。★はめずらしさの目印で、点には影響しない。</li>
+      <li>長い言葉ほど高得点（2字1点・3字2点・4字5点・5字11点・6字18点・7字27点・8字38点）。めずらしい言葉（★）は少し上乗せ。小さい字・濁点・伸ばし棒を使うとボーナス。</li>
       <li>最初の60秒は<b>ミッション</b>。条件に合う言葉は2倍。</li>
       <li>あてずっぽうを続けると少しのあいだ止められる。</li>
     </ul>
@@ -513,7 +513,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
   <div id="adminBody" hidden class="view">
     <div class="card"><div class="row" style="justify-content:space-between"><h2 style="font-size:18px">申請一覧</h2><span class="small muted" id="adminCount"></span></div></div>
     <div class="view" id="adminList"></div>
-    <div class="card"><h3 style="font-size:15px;margin-bottom:8px">採用済み <span class="muted small">★は表示だけ・得点に影響なし</span></h3><div id="adminExtra"></div></div>
+    <div class="card"><h3 style="font-size:15px;margin-bottom:8px">採用済み</h3><div id="adminExtra"></div></div>
   </div>
   <div class="ctrls"><button id="btnAdminBack">ホームへ</button></div>
 </section>
@@ -106404,18 +106404,18 @@ function traceWord(w){
 }
 
 /* ---------- scoring ---------- */
-const BASE=[0,0,1,2,5,9,14,20,28]; // 得点は文字数で決まる：2→1 3→2 4→5 5→9 6→14 7→20 8→28
+const BASE=[0,0,1,2,5,11,18,27,38], MULT=[1,1.2,1.4,1.8]; // 文字数の素点 × ★の倍率（控えめ）
 const TIER_NAME=['ふつう','やや','レア','激レア'];
-// ★はめずらしさの目印（得点には影響しない）。辞書の頻度と、よく使う語に分解できるかで決めている
+// ★はめずらしさ。辞書の頻度と、よく使う語に分解できるかで決める。得点は文字数が主で、★は控えめな倍率
 function wordTier(w){ const e=DICT.get(w); return e?e[0][0]:3; }
 const SMALL_UP={ぁ:'あ',ぃ:'い',ぅ:'う',ぇ:'え',ぉ:'お',っ:'つ',ゃ:'や',ゅ:'ゆ',ょ:'よ'};
 function canon(w){ return w.replace(/[ぁぃぅぇぉっゃゅょ]/g,c=>SMALL_UP[c]); } // ちよ／ちょ は同じ言葉として扱う
 // 文字数×レア度に、読み替えを使った分のボーナス（小さい字 +1/字、濁点・半濁点マス +2）
 // 読み替えボーナス：っゃゅょ +1/字、ぁぃぅぇぉ +3/字、濁点・半濁点マス +2、伸ばし棒 +1/字
-function baseScore(w){ const small=(w.match(/[っゃゅょ]/g)||[]).length, tiny=(w.match(/[ぁぃぅぇぉ]/g)||[]).length*3, bar=(w.match(/ー/g)||[]).length, daku=DAKU_RE.test(w)?2:0; return BASE[Math.min(w.length,8)]+small+tiny+bar+daku; }
+function baseScore(w){ const small=(w.match(/[っゃゅょ]/g)||[]).length, tiny=(w.match(/[ぁぃぅぇぉ]/g)||[]).length*3, bar=(w.match(/ー/g)||[]).length, daku=DAKU_RE.test(w)?2:0; return Math.round(BASE[Math.min(w.length,8)]*MULT[wordTier(w)])+small+tiny+bar+daku; }
 function stars(t){ return t>0?`<span class="star" title="${TIER_NAME[t]}">${'★'.repeat(t)}</span>`:''; }
 // デイリーのメダル基準：盤面の上位15語の合計を基準にする
-function boardPar(words){ return words.reduce((s,w)=>s+Math.min(9,baseScore(w)),0); } // 盤面の語の合計（1語あたり9点で頭打ち）
+function boardPar(words){ return words.reduce((s,w)=>s+Math.min(12,baseScore(w)),0); } // 盤面の語の合計（1語あたり12点で頭打ち）
 const MEDAL_PCT=[0.10,0.17,0.26];
 function medalThresholds(par){ return MEDAL_PCT.map(p=>Math.max(5,Math.round(par*p))); }
 function medalFor(score,par){ const t=medalThresholds(par); return score>=t[2]?3:score>=t[1]?2:score>=t[0]?1:0; }
@@ -107180,7 +107180,7 @@ const DICTX=(function(){
   }
   // レア度は文字数から自動（辞書の既存語と同じ基準）。管理画面で上げ下げできる
   function autoT(w){ return w.length<=3?0:w.length===4?1:w.length===5?2:3; }
-  const RARE_GUIDE='★は「めずらしさ」の目印で、得点には影響しない（得点は文字数だけで決まる）。自動で文字数から仮の値が入るので、気になるときだけ直せばいい。';
+  const RARE_GUIDE='★は「めずらしさ」。得点は文字数が主で、★は控えめな倍率（★1.2／★★1.4／★★★1.8倍）。自動で仮の値が入るので、気になるときだけ直せばいい。';
 
   // 管理用の合言葉（SHA-256）。変えるときは下のハッシュを差し替える。
   async function dbAll(path){ const db=MP.db(); if(!db) return {}; if(db.all) return db.all(path); const q=await db.collection(path).get(); const o={}; q.docs.forEach(d=>{ o[d.id]=d.data(); }); return o; }
@@ -107243,7 +107243,7 @@ const DICTX=(function(){
       <div class="row" style="justify-content:space-between"><b style="font-family:var(--disp);font-size:18px">${esc(x.w)}</b><span class="small muted">${new Date(x.t).toLocaleString('ja-JP')}</span></div>
       <div class="small">${esc(x.d||'')} ${x.note?'— '+esc(x.note):''} <span class="muted">by ${esc(x.by||'')}</span>${DICT.has(x.w)?' <span class="mchip">辞書にあり</span>':''}</div>
       <div class="row" style="margin-top:8px;flex-wrap:wrap"><input type="text" class="adKanji" value="${esc(x.d||'')}" placeholder="表記" style="max-width:160px"><select class="adRare" title="めずらしさの表示だけ">${RARES.map(g=>`<option value="${g[0]}"${+g[0]===autoT(x.w)?" selected":""}>${g[1]}${+g[0]===autoT(x.w)?'（自動）':''}</option>`).join('')}</select><button class="primary adOk" ${(DICT.has(x.w)||DICT.has(canon(x.w)))?'disabled title="すでに辞書にある"':''}>採用</button><button class="adNo">却下</button></div>
-      <div class="small muted" style="margin-top:4px">${x.w.length}文字 → ${baseScore(x.w)}点（★の数に関係なく同じ）</div></div>`).join(''):'<p class="muted">未処理の申請はない</p>');
+      <div class="small muted" style="margin-top:4px">${x.w.length}文字：星なし ${Math.round(BASE[Math.min(x.w.length,8)])}点／★ ${Math.round(BASE[Math.min(x.w.length,8)]*1.2)}／★★ ${Math.round(BASE[Math.min(x.w.length,8)]*1.4)}／★★★ ${Math.round(BASE[Math.min(x.w.length,8)]*1.8)}</div></div>`).join(''):'<p class="muted">未処理の申請はない</p>');
     $('adminList').querySelectorAll('[data-id]').forEach(card=>{
       const id=card.dataset.id, x=items.find(i=>i.id===id);
       card.querySelector('.adOk').onclick=async()=>{ const d=card.querySelector('.adKanji').value.trim()||x.w, t=+card.querySelector('.adRare').value||0, f=0;
