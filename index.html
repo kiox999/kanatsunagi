@@ -104,6 +104,25 @@ input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px 
 .tile.flash-ok{animation:ok .45s}
 .tile.flash-bad{animation:bad .35s}
 .tile.flash-dup{animation:dup .45s}
+.tile.fall{animation:fall .38s cubic-bezier(.2,.8,.3,1)}
+@keyframes fall{from{transform:translateY(calc(var(--d) * -108%));opacity:.6}to{transform:translateY(0);opacity:1}}
+.tile.vanish{animation:vanish .18s forwards}
+@keyframes vanish{to{transform:scale(.4);opacity:0}}
+/* 陣取りの色 */
+:root{--p1:#e07a5f;--p2:#3d9970;--p3:#9b5de5}
+.tile.o-me{background:color-mix(in srgb,var(--ink) 26%,var(--tile));border-color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+.tile.o-p1{background:color-mix(in srgb,var(--p1) 30%,var(--tile));border-color:var(--p1);box-shadow:inset 0 0 0 2px var(--p1)}
+.tile.o-p2{background:color-mix(in srgb,var(--p2) 30%,var(--tile));border-color:var(--p2);box-shadow:inset 0 0 0 2px var(--p2)}
+.tile.o-p3{background:color-mix(in srgb,var(--p3) 30%,var(--tile));border-color:var(--p3);box-shadow:inset 0 0 0 2px var(--p3)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle;background:var(--muted)}
+.dot.me{background:var(--ink)}.dot.p1{background:var(--p1)}.dot.p2{background:var(--p2)}.dot.p3{background:var(--p3)}
+.vplayers{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.vp{font-size:12.5px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--paper);font-variant-numeric:tabular-nums}
+.vp.isme{border-color:var(--ink)}
+.vp b{font-family:var(--disp)}
+.vlog{display:grid;gap:3px;font-size:12.5px;color:var(--muted)}
+.vl b{color:var(--fg)}.vl i{font-style:normal;font-variant-numeric:tabular-nums}
+.fw.stolen{opacity:.5;text-decoration:line-through}
 .tile.hint{background:var(--gold-soft);color:var(--gold);border-color:var(--gold);animation:hint 1.2s ease-in-out infinite}
 :root[data-shape="hex"] .tile.hint{outline-color:var(--gold)}
 @keyframes hint{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
@@ -212,6 +231,8 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
   <div class="modes">
     <button class="mode" id="mDaily"><span class="ico">日</span><div><b>きょうの16マス</b><span id="dailyInfo">毎日0時に盤面が変わる。1日1回、120秒。メダルを集めよう。</span></div></button>
     <button class="mode" id="mFree"><span class="ico">∞</span><div><b>フリー</b><span>ランダムな盤面で何度でも。</span></div></button>
+    <button class="mode" id="mFall"><span class="ico">↓</span><div><b>落ちもの</b><span>使ったマスが消えて新しい字が落ちてくる。コンボを狙え。</span></div></button>
+    <button class="mode" id="mCpu"><span class="ico">CPU</span><div><b>CPUと対戦</b><span>かんたん〜おに。早い者勝ち・陣取りルールも。</span></div></button>
     <button class="mode" id="mTut"><span class="ico">？</span><div><b>あそびかたを練習</b><span>1分で覚えるチュートリアル。</span></div></button>
     <button class="mode" id="mMulti"><span class="ico">対</span><div><b>みんなで対戦</b><span id="multiInfo">同じ盤面で同時スタート。合言葉で集合。</span></div></button>
   </div>
@@ -224,6 +245,8 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
       <li>長い言葉、めずらしい言葉ほど高得点（2字1点・3字2点・4字5点・5字9点・6字14点・7字20点 × レア度）。小さい字を使うと+1、「か/が」マスを濁点で読むと+2。3文字以下は星なし。めずらしさは <span class="star">★</span>やや <span class="star">★★</span>レア <span class="star">★★★</span>激レア（辞書でよく使う印のない言葉は文字数で★1〜3）。</li>
       <li><b>ミッション</b>は最初の60秒だけ。「○を含む」「4文字以上」など文字の条件で、満たす言葉は得点が<b>2倍</b>。</li>
       <li>10秒に5回つづけて辞書にない言葉を出すと、2秒間なぞれなくなる。</li>
+      <li><b>落ちもの</b>：使ったマスが消えて上から新しい字が落ちてくる。4秒以内に続けて決めるとコンボ（+1〜+5）。</li>
+      <li><b>対戦ルール</b>：ふつう（各自の合計点）／早い者勝ち（同じ言葉は先に出した人だけ得点）／陣取り（出した言葉のマスが自分の色に。マスの数で勝負）。CPU対戦でもみんなで対戦でも選べる。</li>
     </ul>
   </details>
   <div class="homebtns"><button id="btnSettings">設定</button><button id="btnHistory">履歴・実績</button><button id="btnDict">みんなの辞書</button></div>
@@ -286,6 +309,17 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
   <details class="card" open><summary style="cursor:pointer;font-family:var(--disp);font-weight:700;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center"><span>見つけたレア単語 <span class="muted small" id="rareCount"></span></span><span class="muted small">▼</span></summary><div class="rare" id="rareList" style="margin-top:10px"></div></details>
 </section>
 
+<!-- CPU SETUP -->
+<section class="view" id="vCpu" hidden>
+  <div class="card set">
+    <h2 style="font-size:18px">CPUと対戦</h2>
+    <div><label>ルール</label><div class="seg" id="cpuRule"><button data-v="normal">ふつう</button><button data-v="race">早い者勝ち</button><button data-v="territory">陣取り</button></div><p class="notice" id="cpuRuleDesc" style="margin:4px 0 0"></p></div>
+    <div><label>CPUの人数</label><div class="seg" id="cpuN"><button data-v="1">1人</button><button data-v="2">2人</button><button data-v="3">3人</button></div></div>
+    <div><label>強さ</label><div class="seg" id="cpuLevel"><button data-v="easy">かんたん</button><button data-v="normal">ふつう</button><button data-v="hard">つよい</button><button data-v="oni">おに</button></div><p class="notice" style="margin:4px 0 0">かんたん：短い言葉をたまに。ふつう：4文字まで。つよい：6文字・★★まで、陣取りでは奪いにくる。おに：全部知っていて速い。</p></div>
+    <div class="ctrls" style="justify-content:flex-start"><button class="primary" id="cpuStart">対戦スタート（120秒）</button></div>
+  </div>
+</section>
+
 <!-- LOBBY -->
 <section class="view" id="vLobby" hidden>
   <div class="card" id="lobbyEntry">
@@ -301,6 +335,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
     <div class="code" id="roomCode">----</div>
     <p class="notice" style="text-align:center;margin:0 0 12px">同じページを開いて、この合言葉で入ってもらう</p>
     <div class="players" id="playerList"></div>
+    <div style="margin-top:12px"><label class="small" style="font-weight:700;display:block;margin-bottom:4px">ルール</label><div class="seg" id="lobbyRule" hidden><button data-v="normal">ふつう</button><button data-v="race">早い者勝ち</button><button data-v="territory">陣取り</button></div><p class="notice" id="lobbyRuleView" hidden></p><p class="notice" id="lobbyRuleDesc" style="margin:4px 0 0"></p></div>
     <div class="row" style="margin-top:14px;justify-content:center">
       <button class="primary" id="btnStart" hidden>スタート（120秒）</button>
       <span class="notice" id="waitNote">主催者のスタートを待っています…</span>
@@ -329,7 +364,9 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
     <button class="primary" id="btnSubmit">決定</button>
     <button class="ghost" id="btnGiveUp">終了</button>
   </div>
+  <div class="vplayers" id="vsPlayers" hidden></div>
   <div class="found" id="found"></div>
+  <div class="vlog" id="vsLog" hidden></div>
 </section>
 
 <!-- RESULT -->
@@ -82951,7 +82988,9 @@ function pickMissions(words,rand,tiles){
 const MISSION_SLOTS=[[0,60]]; // 開始〜60秒
 
 /* ---------- game state ---------- */
-const G={mode:null,seed:0,tiles:[],words:[],missions:[],found:new Map(),foundCanon:new Map(),score:0,path:[],start:0,timerId:null,over:true,room:null,misses:[],lockUntil:0,rejected:[]};
+const G={mode:null,seed:0,tiles:[],words:[],missions:[],found:new Map(),foundCanon:new Map(),score:0,path:[],start:0,timerId:null,over:true,room:null,misses:[],lockUntil:0,rejected:[],rule:'normal',players:[],claims:{},combo:0,lastOk:0};
+const RULE_NAME={normal:'ふつう',race:'早い者勝ち',territory:'陣取り',fall:'落ちもの'};
+const RULE_DESC={normal:'それぞれ独立に得点。合計点で勝負。',race:'同じ言葉は先に出した人だけが得点。',territory:'出した言葉のマスが自分の色になる。最後にマスが多い人の勝ち。',fall:'使ったマスが消えて上から新しい字が落ちてくる。連続で決めるとコンボ。'};
 const DUR=120;
 
 function todayKey(){ const d=new Date(Date.now()+9*3600e3); return d.toISOString().slice(0,10); } // JST date
@@ -82960,18 +82999,19 @@ function dailyDone(){ return dailyAll()[todayKey()]||null; }
 const LAUNCH='2026-11-04';
 
 /* ---------- views ---------- */
-const VIEWS=['vHome','vLobby','vGame','vResult','vDaily','vSettings','vHistory','vDict','vAdmin'];
+const VIEWS=['vHome','vLobby','vGame','vResult','vDaily','vSettings','vHistory','vDict','vAdmin','vCpu'];
 function show(v){ for(const id of VIEWS) $(id).hidden=(id!==v); $('btnHome').hidden=(v==='vHome'||v==='vGame'); window.scrollTo(0,0); }
 
 /* ---------- board render ---------- */
-function renderBoard(){
+function renderBoard(dists){
   const b=$('board'); b.innerHTML='';
   G.tiles.forEach((t,i)=>{
     const d=document.createElement('div'); d.className='tile'; d.dataset.i=i; d.tabIndex=0;
     d.innerHTML=`<span>${t.base}</span>`+(t.alts?`<span class="alt">${t.alts.join('')}</span>`:'');
+    if(dists&&dists[i]>0){ d.style.setProperty('--d',dists[i]); d.classList.add('fall'); }
     b.appendChild(d);
   });
-  drawLines();
+  drawLines(); VS.paintOwners();
 }
 function drawLines(){
   const svg=$('lines'); if(G.path.length<2){ if(G.mode!=='tutorial') svg.innerHTML=''; else svg.querySelectorAll('path:not(.guide)').forEach(p=>p.remove()); return;}
@@ -83003,7 +83043,7 @@ function missionActive(){
 function fullScore(w,m){ const s=baseScore(w); return (m&&m.test(w,DICT.get(w)||[]))?s*2:s; }
 function bestWord(cands){
   const m=missionActive(); let best=null,bs=-1;
-  for(const w of cands){ if(w.length<2||!DICT.has(w)) continue; const s=fullScore(w,m)+(G.foundCanon.has(canon(w))?-1000:0); if(s>bs){bs=s;best=w} }
+  for(const w of cands){ if(w.length<2||!DICT.has(w)) continue; const s=fullScore(w,m)+((G.foundCanon.has(canon(w))||(G.rule==='race'&&VS.takenBy(canon(w))))?-1000:0); if(s>bs){bs=s;best=w} }
   return best;
 }
 
@@ -83061,24 +83101,29 @@ function submit(){
   if(G.over) return;
   const cands=readings(G.path);
   const m=missionActive();
-  let best=null,bs=-1,dup=false;
-  for(const w of cands){ if(!DICT.has(w)) continue; if(G.foundCanon.has(canon(w))){dup=true;continue;} const s=fullScore(w,m); if(s>bs){bs=s;best=w} }
+  let best=null,bs=-1,dup=false,taken=null;
+  for(const w of cands){ if(!DICT.has(w)) continue; if(G.foundCanon.has(canon(w))){dup=true;continue;} if(G.rule==='race'){ const tb=VS.takenBy(canon(w)); if(tb){ taken=tb; continue; } } const s=fullScore(w,m); if(s>bs){bs=s;best=w} }
   if(best){
     G.misses=[];
     const hit=!!(m&&m.test(best,DICT.get(best)||[]));
-    G.found.set(best,{pts:bs,mission:hit?m.id:null}); G.foundCanon.set(canon(best),best);
-    G.score+=bs; $('score').innerHTML=`${G.score}<small>点</small>`;
+    let bonus=0;
+    if(G.rule==='fall'){ const now=Date.now(); G.combo=(now-G.lastOk<4000)?G.combo+1:1; G.lastOk=now; bonus=Math.min(G.combo-1,5); bs+=bonus; }
+    const path=G.path.slice();
+    G.found.set(best,{pts:bs,mission:hit?m.id:null,path}); G.foundCanon.set(canon(best),best);
+    G.score+=bs; VS.onMyClaim({w:best,c:canon(best),pts:bs,t:Date.now(),path}); updateScoreUI();
     flash('flash-ok'); if(hit) SND.missionHit(); else SND.ok(bs);
     const e=DICT.get(best); const disp=hit&&m.id==='med'?(e.find(x=>entryIs(x,1,MED_RE))||e[0])[2]:hit&&m.id==='food'?(e.find(x=>entryIs(x,2,FOOD_RE))||e[0])[2]:e[0][2];
-    const chip=document.createElement('span'); chip.className='fw'+(hit?' m':'');
+    const chip=document.createElement('span'); chip.className='fw'+(hit?' m':''); chip.dataset.c=canon(best);
     chip.innerHTML=`<b>${best}</b>${stars(wordTier(best))}<i>${disp!==best?disp:''}</i><i>+${bs}</i>`;
     $('found').prepend(chip);
-    G.path=[]; updateSel(); feedback(`${best}　+${bs}点${hit?'（ミッション×2）':''}`,'ok');
+    G.path=[]; updateSel(); feedback(`${best}　+${bs}点${hit?'（ミッション×2）':''}${bonus?`（${G.combo}コンボ +${bonus}）`:''}`,'ok');
     if(G.mode==='tutorial') TUT.onWord(best);
+    if(G.rule==='fall') FALL.collapse(path);
   } else {
-    flash(dup?'flash-dup':'flash-bad'); if(dup) SND.dup(); else SND.bad(); G.path=[]; updateSel();
-    feedback(dup?'もう見つけた言葉':'辞書にない言葉', dup?'dup':'bad');
-    if(!dup && G.mode!=='tutorial'){
+    const soft=dup||!!taken;
+    flash(soft?'flash-dup':'flash-bad'); if(soft) SND.dup(); else SND.bad(); G.path=[]; updateSel();
+    feedback(dup?'もう見つけた言葉':taken?`${VS.nameOf(taken)}に取られてる！`:'辞書にない言葉', soft?'dup':'bad');
+    if(!soft && G.mode!=='tutorial'){
       const base=G.path.map(i=>G.tiles[i].base).join(''); if(G.path.length>=2 && !G.rejected.includes(base) && G.rejected.length<30) G.rejected.push(base);
       const now=Date.now(); G.misses=G.misses.filter(t=>now-t<10000); G.misses.push(now);
       if(G.misses.length>=5){ G.misses=[]; G.lockUntil=now+2000; SND.penalty();
@@ -83108,50 +83153,63 @@ function tick(){
 }
 
 /* ---------- game flow ---------- */
+function updateScoreUI(){
+  const el=$('score');
+  if(G.rule==='territory'){ el.innerHTML=`${VS.tilesOf(VS.me())}<small>マス</small> <small>${VS.scoreFor(VS.me())}点</small>`; }
+  else if(G.rule==='race'){ el.innerHTML=`${VS.scoreFor(VS.me())}<small>点</small>`; }
+  else el.innerHTML=`${G.score}<small>点</small>`;
+  VS.renderPlayers();
+}
 function startGame(mode,seed,opts){
-  G.mode=mode; G.seed=seed; G.found=new Map(); G.foundCanon=new Map(); G.score=0; G.misses=[]; G.lockUntil=0; G.rejected=[]; G.path=[]; G.over=true;
+  opts=opts||{};
+  G.mode=mode; G.seed=seed; G.found=new Map(); G.foundCanon=new Map(); G.score=0; G.misses=[]; G.lockUntil=0; G.rejected=[]; G.path=[]; G.over=true; G.combo=0; G.lastOk=0;
+  G.rule=opts.rule||(mode==='fall'?'fall':'normal'); G.maxCombo=0;
+  G.players=opts.players||[{id:'me',name:'あなた',cpu:null}]; G.claims={}; CPU.stop();
   const {tiles,words,rand}=makeBoard(seed);
-  G.tiles=tiles; G.words=words; G.missions=pickMissions(words,rand,tiles); G.par=boardPar(words); G.retry=!!(opts&&opts.retry);
-  renderBoard(); $('found').innerHTML=''; $('score').innerHTML='0<small>点</small>'; $('timer').textContent='2:00'; $('timer').classList.remove('low');
-  const mb=$('mission'); mb.dataset.id=''; mb.className='mission'; mb.innerHTML='<span class="txt muted">ミッションはときどき現れる。満たす言葉は2倍。</span>';
+  G.tiles=tiles; G.words=words; G.missions=G.rule==='fall'?[]:pickMissions(words,rand,tiles); G.par=boardPar(words); G.retry=!!opts.retry; G.cpuOpts=opts.cpuOpts||null;
+  renderBoard(); $('found').innerHTML=''; $('vsLog').innerHTML=''; $('vsLog').hidden=true; $('timer').textContent='2:00'; $('timer').classList.remove('low');
+  const mb=$('mission'); mb.dataset.id=''; mb.className='mission'; mb.innerHTML=G.rule==='fall'?'<span class="txt muted">消えたマスの上から新しい字が落ちてくる。4秒以内に続けて決めるとコンボ。</span>':G.rule!=='normal'?`<span class="txt muted">${RULE_DESC[G.rule]}</span>`:'<span class="txt muted">ミッションは最初の60秒。満たす言葉は2倍。</span>';
   $('preview').textContent='　';
   const th=medalThresholds(G.par);
-  $('modeLabel').innerHTML=mode==='daily'?(G.retry?'きょうの16マス（練習）':`🥉${th[0]} 🥈${th[1]} 🥇${th[2]}`):mode==='multi'?`対戦 ${G.room?G.room.code:''}`:'フリー';
+  $('modeLabel').innerHTML=mode==='daily'?(G.retry?'きょうの16マス（練習）':`🥉${th[0]} 🥈${th[1]} 🥇${th[2]}`):mode==='multi'?`対戦 ${G.room?G.room.code:''}・${RULE_NAME[G.rule]}`:mode==='cpu'?`CPU対戦・${RULE_NAME[G.rule]}`:mode==='fall'?'落ちもの':'フリー';
   $('btnGiveUp').hidden=(mode==='multi'); $('btnGiveUp').textContent='終了'; $('countdown').textContent='3';
-  show('vGame');
-  const startAt=(opts&&opts.startAt)||Date.now()+3200;
+  updateScoreUI(); show('vGame');
+  const startAt=opts.startAt||Date.now()+3200;
   const cd=$('countdown'); cd.hidden=false;
   const cdTimer=setInterval(()=>{
     const r=Math.ceil((startAt-Date.now())/1000);
-    if(r<=0){ clearInterval(cdTimer); cd.hidden=true; SND.count(0); G.start=startAt; G.over=false; G.timerId=setInterval(tick,250); tick(); }
+    if(r<=0){ clearInterval(cdTimer); cd.hidden=true; SND.count(0); G.start=startAt; G.over=false; G.timerId=setInterval(tick,250); tick(); if(mode==='cpu') CPU.start(); }
     else { if(cd.textContent!==String(r)){ cd.textContent=r; SND.count(r); } }
   },100);
 }
 function endGame(){
-  if(G.over||G.mode==='tutorial') return; G.over=true; clearInterval(G.timerId); G.path=[]; updateSel(); SND.reset();
+  if(G.over||G.mode==='tutorial') return; G.over=true; clearInterval(G.timerId); CPU.stop(); G.path=[]; updateSel(); SND.reset();
+  if(G.rule==='fall'){ G.words=[...G.found.keys()]; }
   const timeup=(Date.now()-G.start)/1000>=DUR-0.5;
   if(timeup){ SND.timeup(); const cd=$('countdown'); cd.innerHTML='<span style="font-size:.55em">タイムアップ！</span>'; cd.hidden=false; setTimeout(()=>{ cd.hidden=true; cd.textContent='3'; finish(); },1600); } else { SND.end(); finish(); }
   function finish(){
   if(G.mode==='daily'&&!G.retry){ const d=dailyAll(); d[todayKey()]={score:G.score,found:G.found.size,total:G.words.length,medal:medalFor(G.score,G.par)}; save('kt_daily',d); }
   recordHistory();
   if(G.mode==='multi') MP.submitResult();
+  if(G.mode==='cpu') VS.recordCpuWin();
   showResult();
   }
 }
 let resFilter='all';
 function showResult(){
-  $('resTitle').textContent=G.mode==='daily'?`きょうの16マス（${todayKey()}）${G.retry?'・練習':''}`:G.mode==='multi'?'対戦の結果':'フリー';
+  $('resTitle').textContent=G.mode==='daily'?`きょうの16マス（${todayKey()}）${G.retry?'・練習':''}`:G.mode==='multi'?`対戦の結果・${RULE_NAME[G.rule]}`:G.mode==='cpu'?`CPU対戦の結果・${RULE_NAME[G.rule]}`:G.mode==='fall'?'落ちもの':'フリー';
   const medal=(G.mode==='daily'&&!G.retry)?medalFor(G.score,G.par):0;
-  $('resScore').innerHTML=`${G.score}${medal?' <span style="font-size:32px">'+MEDAL[medal]+'</span>':''}`;
+  $('resScore').innerHTML=G.rule==='territory'?`${VS.tilesOf(VS.me())}<span style="font-size:20px">マス</span> <span style="font-size:22px">${VS.scoreFor(VS.me())}点</span>`:G.rule==='race'?`${VS.scoreFor(VS.me())}`:`${G.score}${medal?' <span style="font-size:32px">'+MEDAL[medal]+'</span>':''}`;
   const th=medalThresholds(G.par);
   $('resMissions').innerHTML=G.missions.map((m,k)=>{ const n=G.words.filter(w=>m.test(w,DICT.get(w)||[])).length, got=[...G.found.values()].filter(v=>v.mission===m.id).length; return `<span class="mchip">ミッション</span> ${m.label}：${got}/${n}語`; }).join('<br>')+(G.mode==='daily'?`<br><span class="muted">メダル基準 🥉${th[0]} 🥈${th[1]} 🥇${th[2]}</span>`:'');
   const best=[...G.found.entries()].sort((a,b)=>b[1].pts-a[1].pts)[0];
   const maxPts=G.words.reduce((s,w)=>s+baseScore(w),0);
-  $('resStats').innerHTML=`<span>見つけた <b>${G.found.size}</b> / ${G.words.length}語</span><span>最高の一語 <b>${best?best[0]+'（'+best[1].pts+'点）':'—'}</b></span><span>全部とれば <b>${maxPts}</b>点（ミッション除く）</span>`;
+  $('resStats').innerHTML=G.rule==='fall'?`<span>見つけた <b>${G.found.size}</b>語</span><span>最高の一語 <b>${best?best[0]+'（'+best[1].pts+'点）':'—'}</b></span><span>最大コンボ <b>${G.maxCombo||G.combo||0}</b></span>`:`<span>見つけた <b>${G.found.size}</b> / ${G.words.length}語</span><span>最高の一語 <b>${best?best[0]+'（'+best[1].pts+'点）':'—'}</b></span><span>全部とれば <b>${maxPts}</b>点（ミッション除く）</span>`;
   $('resAch').innerHTML=(G.newAch&&G.newAch.length)?`<span class="mchip">実績解除</span> ${G.newAch.join('／')}　<span class="muted">着せ替えが増えているかも → 設定</span>`:'';
-  $('resRank').hidden=(G.mode!=='multi');
+  $('resRank').hidden=!(G.mode==='multi'||G.mode==='cpu');
+  if(G.mode==='cpu') VS.renderRank();
   $('btnAgain').textContent=G.mode==='daily'?'同じ盤面で練習':G.mode==='multi'?'部屋にもどる':'もう一回';
-  renderResBoard(); renderWordList(); DICTX.renderRejected();
+  renderResBoard(); VS.paintOwners($('resBoard')); renderWordList(); DICTX.renderRejected();
   show('vResult');
 }
 function renderWordList(){
@@ -83188,6 +83246,7 @@ const TUT=(function(){
   const MISSION={id:'tut',label:'「す」で始まる言葉',test:w=>w[0]==='す'};
   function start(){
     G.mode='tutorial'; G.seed=0; G.found=new Map(); G.foundCanon=new Map(); G.score=0; G.path=[]; G.over=true; G.retry=false;
+    G.rule='normal'; G.claims={}; G.players=[{id:'me',name:'あなた',cpu:null}]; CPU.stop(); $('vsPlayers').hidden=true; $('vsLog').hidden=true;
     G.tiles=TILES.map(t=>({...t})); G.words=solve(G.tiles); G.missions=[]; G.par=boardPar(G.words); step=0;
     renderBoard(); $('found').innerHTML=''; $('score').innerHTML='0<small>点</small>'; $('timer').textContent='練習'; $('timer').classList.remove('low');
     $('preview').textContent='　'; $('modeLabel').textContent='チュートリアル'; $('btnGiveUp').hidden=false; $('btnGiveUp').textContent='やめる';
@@ -83305,7 +83364,132 @@ $('mFree').onclick=()=>{ SND.unlock(); startGame('free',(Math.random()*2**32)>>>
 $('mMulti').onclick=()=>{ MP.openLobby(); };
 $('btnHome').onclick=()=>{ MP.leave(); show('vHome'); refreshHome(); };
 $('btnResHome').onclick=()=>{ MP.leave(); show('vHome'); refreshHome(); };
-$('btnAgain').onclick=()=>{ if(G.mode==='multi'){ MP.backToLobby(); } else if(G.mode==='daily'){ startGame('daily',G.seed,{retry:true}); } else startGame('free',(Math.random()*2**32)>>>0); };
+$('btnAgain').onclick=()=>{ if(G.mode==='multi'){ MP.backToLobby(); } else if(G.mode==='daily'){ startGame('daily',G.seed,{retry:true}); } else if(G.mode==='cpu'){ CPU.launch(G.cpuOpts); } else if(G.mode==='fall'){ startGame('fall',(Math.random()*2**32)>>>0); } else startGame('free',(Math.random()*2**32)>>>0); };
+$('mFall').onclick=()=>{ SND.unlock(); startGame('fall',(Math.random()*2**32)>>>0); };
+$('mCpu').onclick=()=>{ CPU.openSetup(); };
+
+/* ---------- 対戦ルール共通（早い者勝ち・陣取り） ---------- */
+const VS=(function(){
+  const COLORS=['me','p1','p2','p3'];
+  function me(){ return G.mode==='multi'?(MP.uid()||'me'):'me'; }
+  function nameOf(id){ const p=G.players.find(p=>p.id===id); return p?p.name:'？'; }
+  function colorIdx(id){ const i=G.players.findIndex(p=>p.id===id); return i<0?0:i; }
+  function allClaims(){ const out=[]; for(const [pid,m] of Object.entries(G.claims)) for(const [c,v] of Object.entries(m||{})) out.push({pid,c,...v}); out.sort((a,b)=>a.t-b.t); return out; }
+  function takenBy(c){ if(G.rule!=='race') return null; const my=me(); for(const [pid,m] of Object.entries(G.claims)) if(pid!==my&&m&&m[c]) return pid; return null; }
+  function winners(){ // race: canon -> pid who claimed first
+    const w={}; for(const cl of allClaims()) if(!(cl.c in w)) w[cl.c]=cl.pid; return w; }
+  function scoreFor(pid){
+    const m=G.claims[pid]||{}; if(G.rule==='race'){ const w=winners(); return Object.entries(m).reduce((s,[c,v])=>s+(w[c]===pid?v.pts:0),0); }
+    return Object.values(m).reduce((s,v)=>s+v.pts,0);
+  }
+  function owners(){ const o=new Array(16).fill(null); if(G.rule!=='territory') return o; for(const cl of allClaims()) for(const i of (cl.path||[])) o[i]=cl.pid; return o; }
+  function tilesOf(pid){ return owners().filter(x=>x===pid).length; }
+  function paintOwners(board){
+    const b=board||$('board'); if(!b) return; const o=owners();
+    b.querySelectorAll('.tile').forEach(el=>{ COLORS.forEach(c=>el.classList.remove('o-'+c)); const pid=o[+el.dataset.i]; if(pid) el.classList.add('o-'+COLORS[colorIdx(pid)]); });
+  }
+  function onMyClaim(cl){ const my=me(); (G.claims[my]=G.claims[my]||{})[cl.c]=cl; if(G.mode==='multi') MP.pushClaim(cl); afterChange(); }
+  function onOtherClaim(pid,cl){ (G.claims[pid]=G.claims[pid]||{})[cl.c]=cl; log(pid,cl); afterChange(); }
+  function syncClaims(claims){ // multi: replace with server state (keep mine if newer)
+    const my=me(); const mine=G.claims[my]||{}; const before=JSON.stringify(G.claims);
+    G.claims={}; for(const [pid,m] of Object.entries(claims||{})) G.claims[pid]=Object.assign({},m);
+    G.claims[my]=Object.assign({},G.claims[my]||{},mine);
+    if(JSON.stringify(G.claims)!==before){ afterChange(); renderLogFromClaims(); }
+  }
+  let logged=new Set();
+  function renderLogFromClaims(){ for(const cl of allClaims()){ if(cl.pid===me()) continue; const k=cl.pid+'|'+cl.c; if(logged.has(k)) continue; log(cl.pid,cl); } }
+  function log(pid,cl){ logged.add(pid+'|'+cl.c); const el=$('vsLog'); if(!el) return; el.hidden=false; const ci=COLORS[colorIdx(pid)]; const stolen=G.rule==='race'&&G.foundCanon.has(cl.c)&&winners()[cl.c]===pid;
+    el.insertAdjacentHTML('afterbegin',`<div class="vl"><span class="dot ${ci}"></span><b>${MP.esc(nameOf(pid))}</b> ${cl.w} <i>+${cl.pts}</i>${stolen?' <span class="mchip" style="color:var(--bad);border-color:var(--bad);background:transparent">先に取られた</span>':''}</div>`);
+    while(el.children.length>4) el.lastChild.remove();
+    if(G.rule==='territory'&&!G.over) SND.tap(2); }
+  function afterChange(){ if(G.rule==='territory') paintOwners(); updateScoreUI(); markStolen(); }
+  function markStolen(){ if(G.rule!=='race') return; const w=winners(), my=me(); $('found').querySelectorAll('.fw').forEach(ch=>{ const c=ch.dataset.c; if(c) ch.classList.toggle('stolen',w[c]!==my); }); }
+  function renderPlayers(){ const el=$('vsPlayers'); if(!el) return; if(G.players.length<=1){ el.hidden=true; return; } el.hidden=false;
+    const rows=G.players.map(p=>({p,s:G.rule==='territory'?tilesOf(p.id):scoreFor(p.id),pts:scoreFor(p.id)}));
+    el.innerHTML=rows.map(({p,s,pts})=>`<span class="vp ${COLORS[colorIdx(p.id)]}${p.id===me()?' isme':''}"><span class="dot ${COLORS[colorIdx(p.id)]}"></span>${MP.esc(p.name)} <b>${s}</b>${G.rule==='territory'?'<small>マス</small>':''}</span>`).join(''); }
+  function rankRows(){ return G.players.map(p=>({id:p.id,name:p.name,score:scoreFor(p.id),tiles:tilesOf(p.id),n:Object.keys(G.claims[p.id]||{}).length,best:Object.values(G.claims[p.id]||{}).sort((a,b)=>b.pts-a.pts)[0]})).sort((a,b)=>G.rule==='territory'?(b.tiles-a.tiles||b.score-a.score):(b.score-a.score)); }
+  function renderRank(){ const rows=rankRows(); $('rankList').innerHTML=rows.map((x,i)=>`<div class="rk${x.id===me()?' me':''}"><span class="n">${i+1}</span><div><div><span class="dot ${COLORS[colorIdx(x.id)]}"></span>${MP.esc(x.name)}</div><div class="d">${x.n}語・最高「${x.best?x.best.w:'—'}」${G.rule==='territory'?'・'+x.score+'点':''}</div></div><span class="s">${G.rule==='territory'?x.tiles+'<small style="font-size:12px">マス</small>':x.score}</span></div>`).join(''); $('rankNote').textContent=G.rule==='race'?'同じ言葉は先に出した人だけが得点':G.rule==='territory'?'マスの数で順位（同数なら点数）':''; }
+  function recordCpuWin(){ const rows=rankRows(); if(rows.length>=2&&rows[0].id===me()&&(G.cpuOpts&&['hard','oni'].includes(G.cpuOpts.level))){ const H=Object.assign(histDefault(),load('kt_hist',{})); H.multiWins=(H.multiWins||0)+1; save('kt_hist',H); } }
+  function reset(){ logged=new Set(); }
+  return {me,nameOf,takenBy,scoreFor,tilesOf,owners,paintOwners,onMyClaim,onOtherClaim,syncClaims,renderPlayers,renderRank,rankRows,recordCpuWin,reset,colorIdx,COLORS};
+})();
+
+/* ---------- CPU対戦 ---------- */
+const CPU=(function(){
+  const LEVELS={
+    easy:  {name:'かんたん',iv:[7,12], maxLen:3,maxTier:0,know:0.5,prefer:0},
+    normal:{name:'ふつう',  iv:[4.5,8],maxLen:4,maxTier:1,know:0.7,prefer:0.2},
+    hard:  {name:'つよい',  iv:[3,5.5],maxLen:6,maxTier:2,know:0.85,prefer:0.5},
+    oni:   {name:'おに',    iv:[2,3.5],maxLen:7,maxTier:3,know:1,prefer:0.8},
+  };
+  const NAMES=['ロボ太','カナコ','ゴロー'];
+  let timers=[], bots=[];
+  function openSetup(){ const o=load('kt_cpu',{rule:'normal',n:1,level:'normal'}); setupState=o; renderSetup(); show('vCpu'); }
+  let setupState=null;
+  function renderSetup(){
+    $('cpuRule').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===setupState.rule));
+    $('cpuN').querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.v===setupState.n));
+    $('cpuLevel').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===setupState.level));
+    $('cpuRuleDesc').textContent=RULE_DESC[setupState.rule];
+  }
+  for(const [id,key,num] of [['cpuRule','rule',0],['cpuN','n',1],['cpuLevel','level',0]]) $(id).addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; setupState[key]=num?+b.dataset.v:b.dataset.v; renderSetup(); });
+  $('cpuStart').onclick=()=>{ save('kt_cpu',setupState); SND.unlock(); launch(Object.assign({},setupState)); };
+  function launch(o){
+    o=o||load('kt_cpu',{rule:'normal',n:1,level:'normal'});
+    const players=[{id:'me',name:'あなた',cpu:null}]; for(let k=0;k<o.n;k++) players.push({id:'cpu'+k,name:NAMES[k]+'（'+LEVELS[o.level].name+'）',cpu:o.level});
+    VS.reset(); startGame('cpu',(Math.random()*2**32)>>>0,{rule:o.rule,players,cpuOpts:o});
+  }
+  function start(){
+    stop(); bots=[];
+    for(const p of G.players){ if(!p.cpu) continue; const L=LEVELS[p.cpu];
+      const known=G.words.filter(w=>w.length<=L.maxLen&&wordTier(w)<=L.maxTier&&Math.random()<L.know);
+      bots.push({p,L,known}); schedule(bots[bots.length-1],1.5); }
+  }
+  function schedule(bot,mult){ const [a,b]=bot.L.iv; const ms=(a+Math.random()*(b-a))*1000*(mult||1); timers.push(setTimeout(()=>act(bot),ms)); }
+  function act(bot){
+    if(G.over) return;
+    const my=bot.p.id, mine=G.claims[my]||{};
+    let pool=bot.known.filter(w=>!mine[canon(w)]);
+    if(G.rule==='race') pool=pool.filter(w=>!Object.values(G.claims).some(m=>m&&m[canon(w)]));
+    if(!pool.length){ schedule(bot,2); return; }
+    let pick;
+    if(Math.random()<bot.L.prefer){
+      const own=VS.owners();
+      const val=w=>{ let v=baseScore(w); if(G.rule==='territory'){ const p=findPath(w)||[]; v+=p.filter(i=>own[i]&&own[i]!==my).length*2+p.filter(i=>!own[i]).length; } return v; };
+      pool.sort((x,y)=>val(y)-val(x)); pick=pool[Math.floor(Math.random()*Math.min(3,pool.length))];
+    } else pick=pool[Math.floor(Math.random()*pool.length)];
+    const path=findPath(pick); if(!path){ bot.known=bot.known.filter(w=>w!==pick); schedule(bot,0.3); return; }
+    const m=missionActive(); const pts=fullScore(pick,m);
+    VS.onOtherClaim(my,{w:pick,c:canon(pick),pts,t:Date.now(),path});
+    schedule(bot,1);
+  }
+  function stop(){ timers.forEach(clearTimeout); timers=[]; }
+  return {openSetup,launch,start,stop,LEVELS};
+})();
+
+/* ---------- 落ちもの ---------- */
+const FALL=(function(){
+  function pickKana(){ let x=Math.random()*WSUM; for(const k of WKEYS){ x-=WEIGHTS[k]; if(x<=0) return k; } return 'あ'; }
+  function collapse(path){
+    const removed=new Set(path);
+    let tiles=null,dists=null;
+    for(let tryN=0;tryN<20;tryN++){
+      tiles=new Array(16); dists=new Array(16).fill(0);
+      for(let c=0;c<4;c++){
+        const keep=[]; for(let r=3;r>=0;r--){ const i=r*4+c; if(!removed.has(i)) keep.push({t:G.tiles[i],r}); }
+        let r=3; for(const k of keep){ tiles[r*4+c]=k.t; dists[r*4+c]=r-k.r; r--; }
+        let fresh=0; for(;r>=0;r--){ const t={base:pickKana()}; if(DAKU[t.base]&&Math.random()<0.06){ t.alts=[DAKU[t.base]]; if(HANDAKU[t.base]) t.alts.push(HANDAKU[t.base]); } tiles[r*4+c]=t; fresh++; dists[r*4+c]=r+fresh+1; }
+      }
+      const words=solve(tiles); if(words.length>=12 || tryN===19){ G.words=words; break; }
+    }
+    G.maxCombo=Math.max(G.maxCombo||0,G.combo);
+    // 消えるアニメ → 落下
+    const b=$('board'); path.forEach(i=>{ const el=b.querySelector(`.tile[data-i="${i}"]`); if(el) el.classList.add('vanish'); });
+    G.tiles=tiles;
+    setTimeout(()=>{ renderBoard(dists); },180);
+  }
+  return {collapse};
+})();
 
 /* ---------- multiplayer (db) ---------- */
 const MP=(function(){
@@ -83331,9 +83515,13 @@ const MP=(function(){
       room=snap.data(); room.code=code; G.room=room; render();
     },e=>{ err('接続が切れました：'+e.code); });
   }
+  let myRule='normal';
   function render(){
     if(!room) return;
     $('roomCode').textContent=room.code;
+    const rule=room.rule||'normal'; myRule=rule;
+    $('lobbyRule').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===rule));
+    $('lobbyRule').hidden=room.host!==uid; $('lobbyRuleView').hidden=room.host===uid; $('lobbyRuleView').textContent=`ルール：${RULE_NAME[rule]} — ${RULE_DESC[rule]}`; $('lobbyRuleDesc').textContent=RULE_DESC[rule];
     const ps=Object.entries(room.players||{}).sort((a,b)=>a[1].t-b[1].t);
     $('playerList').innerHTML=ps.map(([id,p])=>`<span class="pl${id===room.host?' host':''}${id===uid?' me':''}">${esc(p.name)}</span>`).join('');
     const isHost=room.host===uid;
@@ -83341,18 +83529,22 @@ const MP=(function(){
     // transitions
     if(room.status==='playing' && room.round!==lastRound){
       lastRound=room.round; $('lobbyEntry').hidden=true; $('lobbyRoom').hidden=false;
-      startGame('multi',room.seed,{startAt:room.startAt});
+      const players=Object.entries(room.players||{}).sort((a,b)=>a[1].t-b[1].t).map(([id,p])=>({id,name:p.name,cpu:null}));
+      VS.reset(); startGame('multi',room.seed,{startAt:room.startAt,rule:room.rule||'normal',players});
     } else if(room.status==='lobby' && lastStatus!=='lobby'){
       $('lobbyEntry').hidden=true; $('lobbyRoom').hidden=false; show('vLobby');
     }
     lastStatus=room.status;
+    if(G.mode==='multi'&&room.status==='playing'&&room.round===lastRound&&G.rule!=='normal') VS.syncClaims(room.claims||{});
     if(!$('vResult').hidden && G.mode==='multi') renderRank();
   }
+  async function pushClaim(cl){ if(!room||!db) return; try{ await db.doc('rooms/'+room.code).update({claims:{[uid]:{[cl.c]:cl}}}); }catch(e){} }
+  $('lobbyRule').addEventListener('click',async e=>{ const b=e.target.closest('button'); if(!b||!room||room.host!==uid) return; try{ await db.doc('rooms/'+room.code).update({rule:b.dataset.v}); }catch(e){} });
   function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   async function create(){
     const code=code4(); err('');
     try{
-      await db.doc('rooms/'+code).set({host:uid,status:'lobby',round:0,seed:0,startAt:0,created:Date.now(),players:{[uid]:{name:nick(),t:Date.now()}},results:{}});
+      await db.doc('rooms/'+code).set({host:uid,status:'lobby',round:0,seed:0,startAt:0,created:Date.now(),rule:'normal',players:{[uid]:{name:nick(),t:Date.now()}},results:{},claims:{}});
       watch(code);
     }catch(e){ err('部屋を作れませんでした。共有の権限を確認してください。'); }
   }
@@ -83369,7 +83561,7 @@ const MP=(function(){
   async function start(){
     if(!room||room.host!==uid) return;
     $('btnStart').disabled=true;
-    try{ await db.doc('rooms/'+room.code).update({status:'playing',round:(room.round||0)+1,seed:(Math.random()*2**32)>>>0,startAt:Date.now()+4000,results:{}}); }
+    try{ const r=Object.assign({},room); delete r.code; await db.doc('rooms/'+room.code).set(Object.assign(r,{status:'playing',round:(room.round||0)+1,seed:(Math.random()*2**32)>>>0,startAt:Date.now()+4000,results:{},claims:{}})); }
     catch(e){ err('スタートできませんでした'); }
     $('btnStart').disabled=false;
   }
@@ -83382,12 +83574,13 @@ const MP=(function(){
   function renderRank(){
     if(!room) return;
     const ps=room.players||{}, rs=room.results||{};
-    const rows=Object.keys(ps).map(id=>({id,name:ps[id].name,r:rs[id]&&rs[id].round===room.round?rs[id]:null}));
-    rows.sort((a,b)=>(b.r?b.r.score:-1)-(a.r?a.r.score:-1));
-    $('rankList').innerHTML=rows.map((x,i)=>`<div class="rk${x.id===uid?' me':''}"><span class="n">${x.r?i+1:'…'}</span><div><div>${esc(x.name)}</div><div class="d">${x.r?x.r.n+'語・最高「'+(x.r.words.slice().sort((a,b)=>b[1]-a[1])[0]||['—'])[0]+'」':'集計中…'}</div></div><span class="s">${x.r?x.r.score:''}</span></div>`).join('');
+    if(G.rule!=='normal'){ VS.syncClaims(room.claims||{}); }
+    const rows=Object.keys(ps).map(id=>({id,name:ps[id].name,r:rs[id]&&rs[id].round===room.round?rs[id]:null,s:G.rule==='normal'?(rs[id]?rs[id].score:-1):G.rule==='territory'?VS.tilesOf(id):VS.scoreFor(id),pts:VS.scoreFor(id)}));
+    rows.sort((a,b)=>(b.r?b.s:-1)-(a.r?a.s:-1)||b.pts-a.pts);
+    $('rankList').innerHTML=rows.map((x,i)=>`<div class="rk${x.id===uid?' me':''}"><span class="n">${x.r?i+1:'…'}</span><div><div><span class="dot ${VS.COLORS[VS.colorIdx(x.id)]}"></span>${esc(x.name)}</div><div class="d">${x.r?x.r.n+'語・最高「'+(x.r.words.slice().sort((a,b)=>b[1]-a[1])[0]||['—'])[0]+'」'+(G.rule==='territory'?'・'+x.pts+'点':''):'集計中…'}</div></div><span class="s">${x.r?(G.rule==='territory'?x.s+'<small style="font-size:12px">マス</small>':x.s):''}</span></div>`).join('');
     const pending=rows.filter(x=>!x.r).length;
     if(!pending && rows.length>=2 && rows[0].id===uid){ const H=Object.assign(histDefault(),load('kt_hist',{})); const key=room.code+'#'+room.round; if(!H.wonRounds[key]){ H.wonRounds[key]=1; H.multiWins=(H.multiWins||0)+1; save('kt_hist',H); } }
-    $('rankNote').textContent=pending?`${pending}人の結果を待っています`:'全員そろいました';
+    $('rankNote').textContent=pending?`${pending}人の結果を待っています`:(G.rule==='race'?'全員そろった。同じ言葉は先に出した人だけが得点':G.rule==='territory'?'全員そろった。マスの数で順位':'全員そろいました');
   }
   async function backToLobby(){
     if(room&&room.host===uid){ try{ await db.doc('rooms/'+room.code).update({status:'lobby'}); }catch(e){} }
@@ -83396,7 +83589,7 @@ const MP=(function(){
   function leave(){ if(unsub){unsub();unsub=null;} room=null; G.room=null; }
   $('btnCreate').onclick=create; $('btnJoin').onclick=join; $('btnStart').onclick=start;
   $('btnLeave').onclick=()=>{ leave(); show('vHome'); refreshHome(); };
-  return {openLobby,submitResult,backToLobby,leave,db:()=>db,uid:()=>uid,ready:()=>ready,nick,esc};
+  return {openLobby,submitResult,backToLobby,leave,pushClaim,db:()=>db,uid:()=>uid,ready:()=>ready,nick,esc};
 })();
 
 /* ---------- みんなの辞書（申請・承認・読み込み） ---------- */
@@ -83491,6 +83684,7 @@ const DICTX=(function(){
   return {renderRejected,openAdmin,loadExtra};
 })();
 
+window.KT_DEBUG={G,VS,CPU};
 applySettings();
 refreshHome();
 if(!load('kt_seen',false)){ $('tutHint').hidden=false; save('kt_seen',true); }
