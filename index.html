@@ -393,7 +393,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
 
 <!-- ADMIN（みんなの辞書の承認。URL末尾に #admin でも開ける） -->
 <section class="view" id="vAdmin" hidden>
-  <div class="card" id="adminGate"><h2 style="font-size:18px;margin-bottom:8px">みんなの辞書 管理</h2><div class="row"><input type="password" id="adminPass" placeholder="管理の合言葉"><button class="primary" id="adminGo">開く</button></div><p class="err" id="adminMsg" style="margin:8px 0 0"></p></div>
+  <div class="card" id="adminGate"><h2 style="font-size:18px;margin-bottom:8px">みんなの辞書 管理</h2><p class="notice" id="adminGateTxt" style="margin:0 0 10px"></p><div class="row"><button class="primary" id="adminGo">開く</button><button class="ghost small" id="adminOut" hidden>ログアウト</button></div><p class="err" id="adminMsg" style="margin:8px 0 0"></p></div>
   <div id="adminBody" hidden class="view">
     <div class="card"><div class="row" style="justify-content:space-between"><h2 style="font-size:18px">申請一覧</h2><span class="small muted" id="adminCount"></span></div></div>
     <div class="view" id="adminList"></div>
@@ -103974,6 +103974,7 @@ window.KT_FIREBASE_CONFIG = {
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
 // ---- 公開版（GitHub Pages）用：Firebase Realtime Database で対戦部屋を共有する ----
 // 下の KT_FIREBASE_CONFIG に Firebase コンソールの「ウェブアプリの設定」を貼る。
@@ -103994,7 +103995,11 @@ window.KT_FIREBASE_CONFIG = {
     };
   }
   async function all(path){ const snap=await rtdb.ref('kana/'+path).once('value'); return snap.val()||{}; }
-  window.KT_FIREBASE={db:{doc:docRef,all},uid};
+  let authUser=null;
+  if(firebase.auth){ firebase.auth().onAuthStateChanged(u=>{ authUser=u; }); }
+  async function signIn(){ const p=new firebase.auth.GoogleAuthProvider(); const r=await firebase.auth().signInWithPopup(p); authUser=r.user; return r.user; }
+  async function signOut(){ await firebase.auth().signOut(); authUser=null; }
+  window.KT_FIREBASE={db:{doc:docRef,all},uid,signIn,signOut,user:()=>authUser||(firebase.auth&&firebase.auth().currentUser)};
 })();
 
 </script>
@@ -104868,8 +104873,6 @@ const MP=(function(){
 const DICTX=(function(){
   const GENRES=[['','なし'],['1','医学・からだ'],['2','食べ物'],['4','スポーツ・遊び'],['8','理科'],['16','カタカナ語']];
   // 管理用の合言葉（SHA-256）。変えるときは下のハッシュを差し替える。
-  const ADMIN_HASH='a3e64479b1352349106f039db8458213632b4caaf6aec83acedd2aa78c0edbb7';
-  async function sha(s){ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
   async function dbAll(path){ const db=MP.db(); if(!db) return {}; if(db.all) return db.all(path); const q=await db.collection(path).get(); const o={}; q.docs.forEach(d=>{ o[d.id]=d.data(); }); return o; }
   function addWord(w,entry){ if(!/^[ぁ-ん]{2,8}$/.test(w)) return; const prev=DICT.get(w); if(prev){ if(!prev.some(e=>e[2]===entry[2])) prev.push(entry); return; } DICT.set(w,[entry]); let node=TRIE; for(const ch of w) node=node[ch]||(node[ch]=Object.create(null)); node.$=1; }
   async function loadExtra(){ try{ await MP.ready(); const all=await dbAll('extra'); let n=0; for(const [w,v] of Object.entries(all||{})){ if(v&&v.ok!==false){ addWord(w,[1,+v.f||0,v.d||w,true]); n++; } } return n; }catch(e){ return 0; } }
@@ -104901,10 +104904,23 @@ const DICTX=(function(){
     };
   }
   // 管理画面
+  // 管理画面の入口：公開版は Google ログイン（Firebase Auth、書き込み可否はFirebaseのルールで判定）、
+  // アーティファクト版は claude.ai の編集権限（Editor/Owner）で判定。合言葉は使わない。
   async function openAdmin(){
     show('vAdmin');
     $('adminBody').hidden=true; $('adminGate').hidden=false; $('adminMsg').textContent='';
-    $('adminGo').onclick=async()=>{ const h=await sha($('adminPass').value); if(h!==ADMIN_HASH){ $('adminMsg').textContent='合言葉が違う'; return; } $('adminGate').hidden=true; $('adminBody').hidden=false; renderAdmin(); };
+    const fb=window.KT_FIREBASE;
+    if(fb){
+      const u=fb.user&&fb.user();
+      if(u){ $('adminGateTxt').textContent=`${u.email} でログイン中`; $('adminGo').textContent='管理画面を開く'; $('adminGo').onclick=()=>{ $('adminGate').hidden=true; $('adminBody').hidden=false; renderAdmin(); }; $('adminOut').hidden=false; $('adminOut').onclick=async()=>{ await fb.signOut(); openAdmin(); }; }
+      else { $('adminGateTxt').textContent='管理人の Google アカウントでログインする。ログインしても、Firebase 側で許可されたアカウント以外は採用・却下が保存されない。'; $('adminGo').textContent='Google でログイン'; $('adminOut').hidden=true; $('adminGo').onclick=async()=>{ try{ await fb.signIn(); openAdmin(); }catch(e){ $('adminMsg').textContent='ログインできなかった：'+(e&&e.code||e); } }; }
+      return;
+    }
+    // claude.ai 版
+    try{ const user=await claude.use('user'); const ok=user&&(await user.canEdit()); $('adminOut').hidden=true;
+      if(ok){ $('adminGateTxt').textContent='この公開ページの編集権限があるので管理できる。'; $('adminGo').textContent='管理画面を開く'; $('adminGo').onclick=()=>{ $('adminGate').hidden=true; $('adminBody').hidden=false; renderAdmin(); }; }
+      else { $('adminGateTxt').textContent='管理はこのページの持ち主（編集権限のある人）だけ。'; $('adminGo').hidden=true; }
+    }catch(e){ $('adminGateTxt').textContent='管理機能が使えない環境です。'; $('adminGo').hidden=true; }
   }
   async function renderAdmin(){
     await MP.ready(); const db=MP.db(); if(!db){ $('adminList').innerHTML='<p class="err">通信の準備ができていない</p>'; return; }
@@ -104920,7 +104936,7 @@ const DICTX=(function(){
     $('adminList').querySelectorAll('[data-id]').forEach(card=>{
       const id=card.dataset.id, x=items.find(i=>i.id===id);
       card.querySelector('.adOk').onclick=async()=>{ const d=card.querySelector('.adKanji').value.trim()||x.w, f=+card.querySelector('.adGenre').value||0;
-        try{ await db.doc('extra/'+x.w).set({d,f,by:x.by||'',at:Date.now(),ok:true}); await db.doc('proposals/'+id).update({status:'ok'}); addWord(x.w,[1,f,d,true]); card.remove(); }catch(e){ card.querySelector('.adOk').textContent='失敗'; } };
+        try{ await db.doc('extra/'+x.w).set({d,f,by:x.by||'',at:Date.now(),ok:true}); await db.doc('proposals/'+id).update({status:'ok'}); addWord(x.w,[1,f,d,true]); card.remove(); }catch(e){ card.querySelector('.adOk').textContent='権限なし'; $('adminCount').textContent='書き込みが拒否された。管理人のアカウントでログインしているか確認。'; } };
       card.querySelector('.adNo').onclick=async()=>{ try{ await db.doc('proposals/'+id).update({status:'ng'}); card.remove(); }catch(e){} };
     });
     const ex=Object.entries(extra||{}).sort((a,b)=>(b[1].at||0)-(a[1].at||0));
