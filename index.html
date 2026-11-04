@@ -494,9 +494,9 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
     <h2 style="font-size:18px;margin-bottom:4px">「<span id="dpWordTxt"></span>」を申請</h2>
     <p class="notice" style="margin:0 0 10px">辞書にないことを確認済み。表記とひとことを添えて送る。</p>
     <input type="hidden" id="dpWord">
-    <div class="row" style="margin-bottom:6px"><input type="text" id="dpKanji" maxlength="20" placeholder="表記（漢字・カタカナなど）"></div>
-    <div class="row" style="margin-bottom:6px"><input type="text" id="dpNote" maxlength="60" placeholder="ひとこと（どういう言葉か）"></div>
-    <div class="row" style="margin-bottom:8px"><input type="text" id="dpBy" maxlength="12" placeholder="なまえ"></div>
+    <div class="row" style="margin-bottom:6px"><input type="text" id="dpKanji" maxlength="20" placeholder="ふつうの書き方（漢字・カタカナなど）"></div>
+    <div class="row" style="margin-bottom:6px"><input type="text" id="dpNote" maxlength="60" placeholder="どういう言葉か、ひとこと"></div>
+    <div class="row" style="margin-bottom:8px"><input type="text" id="dpBy" maxlength="12" placeholder="あなたの名前（申請者として表示）"></div>
     <div class="row"><button class="primary" id="dpSend">申請する</button><span class="small" id="dpMsg"></span></div>
   </div>
   <details class="card" open><summary style="cursor:pointer;font-family:var(--disp);font-weight:700;font-size:15px;list-style:none;display:flex;justify-content:space-between"><span>採用された言葉 <span class="muted small" id="dpCount"></span></span><span class="muted small">▼</span></summary><div class="found" id="dpExtra" style="margin-top:10px"></div></details>
@@ -566,7 +566,7 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
 <section class="view" id="vLobby" hidden>
   <div class="card" id="lobbyEntry">
     <h2 style="font-size:18px;margin-bottom:8px">みんなで対戦</h2>
-    <div class="row" style="margin-bottom:10px"><input type="text" id="nick" maxlength="12" placeholder="なまえ"></div>
+    <div class="row" style="margin-bottom:10px"><input type="text" id="nick" maxlength="12" placeholder="あなたの名前（対戦で表示）"></div>
     <div class="row" style="margin-bottom:8px"><button class="primary" id="btnCreate" style="flex:1">部屋をつくる</button></div>
     <div class="row"><input type="text" id="joinCode" maxlength="4" placeholder="合言葉（4文字）" style="text-transform:uppercase"><button id="btnJoin">入る</button></div>
     <p class="notice" id="lobbyNote" style="margin:10px 0 0">このページを共有した相手と遊べます。</p>
@@ -107181,9 +107181,9 @@ const DICTX=(function(){
     const f=$('propForm'); f.hidden=false;
     let nick=''; try{ nick=localStorage.getItem('kt_nick')||''; }catch(e){}
     f.innerHTML=`<div class="card" style="padding:10px 12px"><b style="font-family:var(--disp);font-size:18px">${w}</b>
-      <div class="row" style="margin-top:8px"><input type="text" id="propKanji" maxlength="20" placeholder="表記（漢字・カタカナなど）"></div>
-      <div class="row" style="margin-top:6px"><input type="text" id="propNote" maxlength="60" placeholder="ひとこと（どういう言葉か）"></div>
-      <div class="row" style="margin-top:6px"><input type="text" id="propBy" maxlength="12" placeholder="なまえ" value="${MP.esc(nick)}"></div>
+      <div class="row" style="margin-top:8px"><input type="text" id="propKanji" maxlength="20" placeholder="ふつうの書き方（漢字・カタカナなど）"></div>
+      <div class="row" style="margin-top:6px"><input type="text" id="propNote" maxlength="60" placeholder="どういう言葉か、ひとこと"></div>
+      <div class="row" style="margin-top:6px"><input type="text" id="propBy" maxlength="12" placeholder="あなたの名前（申請者として表示）" value="${MP.esc(nick)}"></div>
       <div class="row" style="margin-top:8px"><button class="primary" id="propSend">申請する</button><button class="ghost" id="propCancel">やめる</button><span class="small muted" id="propMsg"></span></div></div>`;
     $('propCancel').onclick=()=>{ f.hidden=true; };
     $('propSend').onclick=async()=>{
