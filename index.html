@@ -379,21 +379,22 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
 <!-- DICT（みんなの辞書：申請と採用語一覧） -->
 <section class="view" id="vDict" hidden>
   <div class="card">
-    <h2 style="font-size:18px;margin-bottom:4px">辞書を調べる</h2>
+    <h2 style="font-size:18px;margin-bottom:4px">みんなの辞書</h2>
+    <p class="notice" style="margin:0 0 10px">まず言葉を調べる。辞書になければ、そこから申請できる。管理人が採用すると全員の辞書に入る。</p>
     <div class="row"><input type="text" id="dpSearch" maxlength="8" placeholder="ひらがなで入力（例：あほ）"></div>
     <div id="dpSearchRes" class="small" style="margin-top:8px;min-height:20px"></div>
   </div>
-  <div class="card">
-    <h2 style="font-size:18px;margin-bottom:4px">みんなの辞書に申請</h2>
-    <p class="notice" style="margin:0 0 10px">辞書にない言葉を申請できる。管理人が採用すると全員の辞書に入り、ゲーム中に通るようになる。</p>
-    <div class="row" style="margin-bottom:6px"><input type="text" id="dpWord" maxlength="8" placeholder="ひらがなで（2〜8文字）"></div>
+  <div class="card" id="dpApply" hidden>
+    <h2 style="font-size:18px;margin-bottom:4px">「<span id="dpWordTxt"></span>」を申請</h2>
+    <p class="notice" style="margin:0 0 10px">辞書にないことを確認済み。表記とひとことを添えて送る。</p>
+    <input type="hidden" id="dpWord">
     <div class="row" style="margin-bottom:6px"><input type="text" id="dpKanji" maxlength="20" placeholder="表記（漢字・カタカナなど）"></div>
     <div class="row" style="margin-bottom:6px"><input type="text" id="dpNote" maxlength="60" placeholder="ひとこと（どういう言葉か）"></div>
     <div class="row" style="margin-bottom:8px"><input type="text" id="dpBy" maxlength="12" placeholder="なまえ"></div>
     <div class="row"><button class="primary" id="dpSend">申請する</button><span class="small" id="dpMsg"></span></div>
   </div>
   <details class="card" open><summary style="cursor:pointer;font-family:var(--disp);font-weight:700;font-size:15px;list-style:none;display:flex;justify-content:space-between"><span>採用された言葉 <span class="muted small" id="dpCount"></span></span><span class="muted small">▼</span></summary><div class="found" id="dpExtra" style="margin-top:10px"></div></details>
-  <div class="ctrls"><button class="ghost small" id="btnDictAdmin">管理（合言葉が必要）</button></div>
+  <div class="ctrls"><button class="ghost small" id="btnDictAdmin">管理（管理人のみ）</button></div>
 </section>
 
 <!-- ADMIN（みんなの辞書の承認。URL末尾に #admin でも開ける） -->
@@ -104937,7 +104938,7 @@ const DICTX=(function(){
     $('adminList').innerHTML=pend.length?pend.map(x=>`<div class="card" style="padding:10px 12px" data-id="${x.id}">
       <div class="row" style="justify-content:space-between"><b style="font-family:var(--disp);font-size:18px">${esc(x.w)}</b><span class="small muted">${new Date(x.t).toLocaleString('ja-JP')}</span></div>
       <div class="small">${esc(x.d||'')} ${x.note?'— '+esc(x.note):''} <span class="muted">by ${esc(x.by||'')}</span>${DICT.has(x.w)?' <span class="mchip">辞書にあり</span>':''}</div>
-      <div class="row" style="margin-top:8px;flex-wrap:wrap"><input type="text" class="adKanji" value="${esc(x.d||'')}" placeholder="表記" style="max-width:160px"><select class="adGenre">${GENRES.map(g=>`<option value="${g[0]}">${g[1]}</option>`).join('')}</select><button class="primary adOk">採用</button><button class="adNo">却下</button></div></div>`).join(''):'<p class="muted">未処理の申請はない</p>';
+      <div class="row" style="margin-top:8px;flex-wrap:wrap"><input type="text" class="adKanji" value="${esc(x.d||'')}" placeholder="表記" style="max-width:160px"><select class="adGenre">${GENRES.map(g=>`<option value="${g[0]}">${g[1]}</option>`).join('')}</select><button class="primary adOk" ${(DICT.has(x.w)||DICT.has(canon(x.w)))?'disabled title="すでに辞書にある"':''}>採用</button><button class="adNo">却下</button></div></div>`).join(''):'<p class="muted">未処理の申請はない</p>';
     $('adminList').querySelectorAll('[data-id]').forEach(card=>{
       const id=card.dataset.id, x=items.find(i=>i.id===id);
       card.querySelector('.adOk').onclick=async()=>{ const d=card.querySelector('.adKanji').value.trim()||x.w, f=+card.querySelector('.adGenre').value||0;
@@ -104951,7 +104952,7 @@ const DICTX=(function(){
   $('btnAdminBack').onclick=()=>{ show('vHome'); refreshHome(); };
   // みんなの辞書ページ
   async function openDict(){
-    show('vDict'); try{ $('dpBy').value=localStorage.getItem('kt_nick')||''; }catch(e){}
+    show('vDict'); $('dpApply').hidden=true; $('dpSearch').value=''; $('dpSearchRes').innerHTML=''; try{ $('dpBy').value=localStorage.getItem('kt_nick')||''; }catch(e){}
     $('dpMsg').textContent=''; $('dpExtra').innerHTML='<span class="muted small">読み込み中…</span>';
     await MP.ready(); const db=MP.db();
     if(!db){ $('dpExtra').innerHTML='<span class="muted small">通信の準備ができていない（ページを読み込み直してみて）</span>'; $('dpSend').disabled=true; return; }
@@ -104962,10 +104963,10 @@ const DICTX=(function(){
   }
   $('dpSend').onclick=async()=>{
     const w=toHira($('dpWord').value), d=$('dpKanji').value.trim(), note=$('dpNote').value.trim(), by=$('dpBy').value.trim()||'名無し';
-    if(!/^[ぁ-ん]{2,8}$/.test(w)){ $('dpMsg').textContent='ひらがな2〜8文字で'; return; }
-    if(DICT.has(w)||DICT.has(canon(w))){ $('dpMsg').textContent='その言葉はもう辞書にある'; return; }
+    if(!/^[ぁ-ん]{2,8}$/.test(w)){ $('dpMsg').textContent='まず上で言葉を調べてから'; return; }
+    if(DICT.has(w)||DICT.has(canon(w))){ $('dpMsg').textContent='その言葉はもう辞書にある'; $('dpApply').hidden=true; return; }
     const db=MP.db(); if(!db) return; $('dpSend').disabled=true;
-    try{ const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); await db.doc('proposals/'+id).set({w,d,note,by,t:Date.now(),status:'pending'}); $('dpMsg').textContent='送った！採用をお待ちください'; $('dpWord').value=''; $('dpKanji').value=''; $('dpNote').value=''; try{ localStorage.setItem('kt_nick',by); }catch(e){} }
+    try{ const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); await db.doc('proposals/'+id).set({w,d,note,by,t:Date.now(),status:'pending'}); $('dpMsg').textContent='送った！採用をお待ちください'; $('dpKanji').value=''; $('dpNote').value=''; setTimeout(()=>{ $('dpApply').hidden=true; $('dpSearch').value=''; $('dpSearchRes').innerHTML=''; },1200); try{ localStorage.setItem('kt_nick',by); }catch(e){} }
     catch(e){ $('dpMsg').textContent='送れなかった：'+(e&&e.code||e); }
     $('dpSend').disabled=false;
   };
@@ -104985,10 +104986,10 @@ const DICTX=(function(){
     if(alt) html+=`<div class="muted" style="margin-top:4px">大小違いの「${alt}」は辞書にある（同じ言葉として扱う）</div>`;
     if(pre.length) html+=`<div style="margin-top:6px" class="found">${pre.map(k=>`<span class="fw"><b>${k}</b>${stars(wordTier(k))}<i>${(DICT.get(k)[0][2]!==k?DICT.get(k)[0][2]:'')}</i></span>`).join('')}</div>`;
     out.innerHTML=html;
-    const u=$('dpUse'); if(u) u.onclick=()=>{ $('dpWord').value=w; $('dpWord').scrollIntoView({block:'center',behavior:'smooth'}); $('dpKanji').focus(); };
+    const u=$('dpUse'); if(u) u.onclick=()=>{ $('dpWord').value=w; $('dpWordTxt').textContent=w; $('dpApply').hidden=false; $('dpMsg').textContent=''; $('dpApply').scrollIntoView({block:'center',behavior:'smooth'}); $('dpKanji').focus(); };
+    if(!(e===undefined&&w.length>=2&&!DICT.has(c))) $('dpApply').hidden=true; else if($('dpWord').value!==w) $('dpApply').hidden=true;
   }
   $('dpSearch').addEventListener('input',e=>lookup(e.target.value));
-  $('dpWord').addEventListener('input',e=>{ const w=toHira(e.target.value); $('dpMsg').textContent=DICT.has(w)?'その言葉はもう辞書にある':''; });
   $('btnDict').onclick=openDict;
   $('btnDictAdmin').onclick=openAdmin;
   if(location.hash==='#admin') openAdmin();
