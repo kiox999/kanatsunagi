@@ -155,18 +155,24 @@ input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px 
 .qfloat .dmg{color:var(--bad)}.qfloat .hurt{color:var(--bad)}.qfloat .ok{color:var(--ok)}.qfloat .muted{color:var(--muted)}
 .qfloat small{display:block;font-family:var(--body);font-weight:500;font-size:11.5px;color:var(--muted)}
 .qd{align-items:flex-start}.qd .chip{margin-left:6px;font-size:11px}
+.qslots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.qslots .qc.big{grid-template-columns:1fr;justify-items:center;text-align:center;min-height:96px;width:100%;cursor:pointer}
+.qslots .qc.big b{grid-row:auto;width:34px;height:34px;font-size:18px}
+.qslots .qc.big small{text-align:center}
+.qslots .qc.picked{outline:3px solid var(--gold);background:var(--gold-soft)}
+.qslots .qc.empty{border-style:dashed;color:var(--muted)}
 /* ---- クエストはドット絵風 ---- */
 :root{--px:"DotGothic16","Zen Maru Gothic",monospace}
-#vQuest,#questPanel,body.quest #board,body.quest .preview,body.quest .ctrls,body.quest #countdown{font-family:var(--px);letter-spacing:.02em}
-#vQuest h2,#vQuest h3,#vQuest b,#questPanel b,body.quest #countdown{font-family:var(--px)}
-#vQuest .card,#questPanel .qenemy,#questPanel .qparty,#vQuest .mode,#vQuest button,#vQuest .qc,#vQuest details.card{border-radius:0;border:3px solid var(--fg);box-shadow:4px 4px 0 var(--fg)}
+#vQuest,#vParty,#questPanel,body.quest #board,body.quest .preview,body.quest .ctrls,body.quest #countdown{font-family:var(--px);letter-spacing:.02em}
+#vQuest h2,#vQuest h3,#vQuest b,#vParty h2,#vParty h3,#vParty b,#questPanel b,body.quest #countdown{font-family:var(--px)}
+#vQuest .card,#vParty .card,#questPanel .qenemy,#questPanel .qparty,#vQuest .mode,#vQuest button,#vParty button,#vQuest .qc,#vParty .qc,#vQuest details.card,#vParty details.card{border-radius:0;border:3px solid var(--fg);box-shadow:4px 4px 0 var(--fg)}
 #vQuest .ctrls button,#vQuest .row button{box-shadow:3px 3px 0 var(--fg)}
-#vQuest button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--fg)}
-#vQuest .qc b,#questPanel .qc b{border-radius:0;font-family:var(--px)}
-#vQuest .qc{box-shadow:none;border-width:2px}
+#vQuest button:active,#vParty button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--fg)}
+#vQuest .qc b,#vParty .qc b,#questPanel .qc b{border-radius:0;font-family:var(--px)}
+#vQuest .qc,#vParty .qc{box-shadow:none;border-width:2px}
 #vQuest .mode .ico{border-radius:0;border:2px solid var(--fg);font-family:var(--px)}
 #vQuest .chip{border-radius:0;border-width:2px;font-family:var(--px)}
-#vQuest .notice,#vQuest .small,#questPanel small{font-family:var(--px)}
+#vQuest .notice,#vQuest .small,#vParty .notice,#vParty .small,#questPanel small{font-family:var(--px)}
 #vQuest .bigscore{font-family:var(--px)}
 #vQuest .found{gap:4px}
 .bar{border-radius:0;border:2px solid var(--fg);background:var(--paper);padding:1px;height:14px}
@@ -383,8 +389,19 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
     <div class="row" style="margin-top:8px"><button class="primary" id="qGacha1">ガチャ 1回</button><button id="qGacha10">10連</button></div>
     <div class="found" id="qGachaMsg" style="margin-top:8px"></div>
   </div>
-  <div class="card"><h3 style="font-size:15px;margin-bottom:8px">パーティ（タップで入れ替え）</h3><div id="qParty2"></div><div id="qPick" hidden style="margin-top:10px"></div></div>
+  <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="font-size:15px">パーティ</h3><button id="qEditParty">編成</button></div><div class="qcards" id="qParty2"></div><div class="small muted" id="qPartyStat" style="margin-top:6px"></div></div>
   <div class="card"><h3 style="font-size:15px;margin-bottom:8px">ダンジョン</h3><p class="notice" style="margin:0 0 8px">ターン制。1ターンの制限時間内に言葉を1つ作って攻撃。言葉の点数×パーティの攻撃力がダメージ。敵は「攻撃まで」が0になると殴ってくる。</p><div class="modes" id="qDungeons"></div></div>
+</section>
+
+<!-- PARTY EDIT -->
+<section class="view" id="vParty" hidden>
+  <div class="card">
+    <div class="row" style="justify-content:space-between"><h2 style="font-size:18px">パーティ編成</h2><button class="primary" id="qPartyDone">決定</button></div>
+    <p class="notice" style="margin:4px 0 8px">上の枠をタップして選び、下のカードをタップして入れる。</p>
+    <div class="qslots" id="qSlots"></div>
+    <div class="small muted" id="qSlotStat" style="margin-top:6px"></div>
+  </div>
+  <div class="card"><h3 style="font-size:15px;margin-bottom:8px">持っているカード <span class="muted small" id="qOwnedN"></span></h3><div class="qgrid" id="qOwned"></div></div>
   <details class="card" id="qColl"></details>
 </section>
 
@@ -83084,7 +83101,7 @@ function dailyDone(){ return dailyAll()[todayKey()]||null; }
 const LAUNCH='2026-11-04';
 
 /* ---------- views ---------- */
-const VIEWS=['vHome','vLobby','vGame','vResult','vDaily','vSettings','vHistory','vDict','vAdmin','vCpu','vQuest'];
+const VIEWS=['vHome','vLobby','vGame','vResult','vDaily','vSettings','vHistory','vDict','vAdmin','vCpu','vQuest','vParty'];
 function show(v){ for(const id of VIEWS) $(id).hidden=(id!==v); $('btnHome').hidden=(v==='vHome'||v==='vGame'); window.scrollTo(0,0); }
 
 /* ---------- board render ---------- */
@@ -83998,20 +84015,33 @@ const QUEST=(function(){
 
   /* ---- ホーム ---- */
   function openHome(){ q=Q(); el('qResult').hidden=true; el('qGachaMsg').textContent=''; renderHome(); show('vQuest'); }
-  let pickSlot=-1;
+  function cardHtml(c,extra){ return `<b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}　攻${cardAtk(c,q)} 体${c.hp}${(q.cards[c.id]||1)>1?'　LB'+Math.min(5,q.cards[c.id]-1):''}</small><small>${c.sk.d}${c.pv?'／'+c.pv.d:''}</small>${extra||''}`; }
+  function statText(st){ return `合計 攻撃力 ${st.atk}・HP ${st.hp}${st.time?'・時間+'+st.time+'秒':''}${st.regen?'・毎ターン'+st.regen+'%回復':''}${st.shield?'・常時'+st.shield+'%軽減':''}`; }
   function renderHome(){
     q=Q(); const st=partyStats(q);
     el('qBank').textContent=bank();
-    el('qParty2').innerHTML=q.party.map((id,i)=>{ const c=CARD_BY[id]; return `<button class="qslot" data-i="${i}"><span class="qc r${c.r} big"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}　攻${cardAtk(c,q)} 体${c.hp}</small><small>${c.sk.d}${c.pv?'／'+c.pv.d:''}</small></span></button>`; }).join('')+`<div class="small muted" style="margin-top:6px">合計 攻撃力 ${st.atk}・HP ${st.hp}${st.time?'・時間+'+st.time+'秒':''}${st.regen?'・毎ターン'+st.regen+'%回復':''}${st.shield?'・常時'+st.shield+'%軽減':''}</div>`;
-    el('qPick').hidden=pickSlot<0;
-    if(pickSlot>=0){ const owned=CARDS.filter(c=>q.cards[c.id]); el('qPick').innerHTML=`<div class="small" style="margin-bottom:6px">${pickSlot+1}枠目に入れるカードを選ぶ</div><div class="qgrid">${owned.map(c=>`<button class="qc r${c.r} big${q.party.includes(c.id)?' inparty':''}" data-id="${c.id}"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}　攻${cardAtk(c,q)} 体${c.hp}${(q.cards[c.id]||1)>1?'　LB'+Math.min(5,q.cards[c.id]-1):''}</small><small>${c.sk.d}</small></button>`).join('')}</div><div class="ctrls" style="margin-top:6px"><button class="ghost small" id="qPickCancel">やめる</button></div>`; el('qPickCancel').onclick=()=>{ pickSlot=-1; renderHome(); }; }
+    el('qParty2').innerHTML=q.party.map(id=>{ const c=CARD_BY[id]; return `<span class="qc r${c.r}"><b>${c.k}</b>${c.name}</span>`; }).join('');
+    el('qPartyStat').textContent=statText(st);
     const dd=dailyDungeon(); const today=q.daily[todayKey()];
     el('qDungeons').innerHTML=[dd,...DUNGEONS].map(d=>`<button class="mode qd" data-id="${d.id}"><span class="ico">${d.daily?'日':ENEMY[d.floors[d.floors.length-1].e].em}</span><div><b>${d.name}</b>${d.daily?(today?`<span class="chip" style="color:var(--gold)">今日 ${MEDAL[today.medal]} 残HP${today.hp}%</span>`:''):(q.cleared[d.id]?'<span class="chip" style="color:var(--ok)">クリア済</span>':'')}<span>${d.floors.length}階・報酬 ${d.reward}pt${!d.daily&&!q.cleared[d.id]?'（初回2倍）':''}</span><span class="muted">${d.floors.map(f=>ENEMY[f.e].em).join(' ')}</span></div></button>`).join('');
-    const ownedN=Object.keys(q.cards).length;
-    el('qColl').innerHTML=`<summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between"><span style="font-family:var(--disp);font-weight:700">カード図鑑 <span class="muted small">${ownedN} / ${CARDS.length}</span></span><span class="muted small">▼</span></summary><div class="qgrid" style="margin-top:10px">${CARDS.map(c=>q.cards[c.id]?`<span class="qc r${c.r} big"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}　攻${cardAtk(c,q)} 体${c.hp}${(q.cards[c.id]||1)>1?'　LB'+Math.min(5,q.cards[c.id]-1):''}</small><small>${c.sk.d}${c.pv?'／'+c.pv.d:''}</small></span>`:`<span class="qc lock big"><b>？</b>？？？<small>${RARE_NAME[c.r]}</small></span>`).join('')}</div>`;
   }
-  el('qParty2').addEventListener('click',e=>{ const b=e.target.closest('.qslot'); if(!b) return; pickSlot=+b.dataset.i; renderHome(); });
-  el('qPick').addEventListener('click',e=>{ const b=e.target.closest('[data-id]'); if(!b||pickSlot<0) return; const id=b.dataset.id; q=Q(); const j=q.party.indexOf(id); if(j>=0){ [q.party[j],q.party[pickSlot]]=[q.party[pickSlot],q.party[j]]; } else q.party[pickSlot]=id; saveQ(q); pickSlot=-1; renderHome(); });
+  /* ---- 編成画面 ---- */
+  let pickSlot=0;
+  function openParty(){ q=Q(); pickSlot=0; renderParty(); show('vParty'); }
+  function renderParty(){
+    q=Q(); const st=partyStats(q);
+    el('qSlots').innerHTML=q.party.map((id,i)=>{ const c=CARD_BY[id]; return c?`<button class="qc r${c.r} big${i===pickSlot?' picked':''}" data-slot="${i}"><b>${c.k}</b>${c.name}<small>${RARE_NAME[c.r]}</small><small>攻${cardAtk(c,q)} 体${c.hp}</small></button>`:`<button class="qc big empty" data-slot="${i}"><b>＋</b>空き</button>`; }).join('');
+    el('qSlotStat').textContent=statText(st);
+    const owned=CARDS.filter(c=>q.cards[c.id]).sort((a,b)=>b.r-a.r||a.id.localeCompare(b.id));
+    el('qOwnedN').textContent=`${owned.length}枚`;
+    el('qOwned').innerHTML=owned.map(c=>`<button class="qc r${c.r} big${q.party.includes(c.id)?' inparty':''}" data-id="${c.id}">${cardHtml(c,q.party.includes(c.id)?'<small style="color:var(--ink)">編成中（'+(q.party.indexOf(c.id)+1)+'枠）</small>':'')}</button>`).join('');
+    const ownedN=owned.length;
+    el('qColl').innerHTML=`<summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between"><span style="font-weight:700">カード図鑑 <span class="muted small">${ownedN} / ${CARDS.length}</span></span><span class="muted small">▼</span></summary><div class="qgrid" style="margin-top:10px">${CARDS.map(c=>q.cards[c.id]?`<span class="qc r${c.r} big">${cardHtml(c)}</span>`:`<span class="qc lock big"><b>？</b>？？？<small>${RARE_NAME[c.r]}</small><small>ガチャで出る</small></span>`).join('')}</div>`;
+  }
+  el('qSlots').addEventListener('click',e=>{ const b=e.target.closest('[data-slot]'); if(!b) return; pickSlot=+b.dataset.slot; renderParty(); });
+  el('qOwned').addEventListener('click',e=>{ const b=e.target.closest('[data-id]'); if(!b) return; const id=b.dataset.id; q=Q(); const j=q.party.indexOf(id); if(j===pickSlot) return; if(j>=0){ [q.party[j],q.party[pickSlot]]=[q.party[pickSlot],q.party[j]]; } else q.party[pickSlot]=id; saveQ(q); SND.tap(pickSlot+1); pickSlot=(pickSlot+1)%3; renderParty(); });
+  el('qEditParty').onclick=openParty;
+  el('qPartyDone').onclick=()=>{ SND.unlock(); openHome(); };
   el('qDungeons').addEventListener('click',e=>{ const b=e.target.closest('.qd'); if(!b) return; SND.unlock(); const id=b.dataset.id; const d=id==='daily'?dailyDungeon():DUNGEONS.find(x=>x.id===id); startDungeon(d,id==='daily'?hashStr('questboard-'+todayKey()):undefined); });
   el('qGacha1').onclick=()=>gacha(1); el('qGacha10').onclick=()=>gacha(10);
   el('mQuest').onclick=openHome;
