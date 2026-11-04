@@ -53,9 +53,10 @@ body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px;
   -webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 h1,h2,h3{font-family:var(--disp);margin:0;text-wrap:balance}
-button{font-family:inherit;font-size:inherit;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--fg);border-radius:10px;padding:8px 14px}
+button{font-family:inherit;font-size:inherit;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--fg);border-radius:12px;padding:8px 14px}
 button:focus-visible,input:focus-visible,.tile:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
-button.primary{background:var(--ink);color:var(--tile-sel-fg);border-color:var(--ink);font-weight:700}
+button.primary{background:var(--ink);color:var(--tile-sel-fg);border-color:var(--ink);font-weight:700;box-shadow:0 3px 0 color-mix(in srgb,var(--ink) 60%,#000)}
+button.primary:active{transform:translateY(2px);box-shadow:0 1px 0 color-mix(in srgb,var(--ink) 60%,#000)}
 button.ghost{background:transparent}
 button:disabled{opacity:.45;cursor:default}
 input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--fg);width:100%}
@@ -66,11 +67,34 @@ input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px 
 .muted{color:var(--muted)}
 .small{font-size:12.5px}
 /* home */
+/* ---- ホーム（ポップ） ---- */
+:root{--c1:#ff7b54;--c2:#ffb627;--c3:#3ec99f;--c4:#3f9bff;--c5:#b57bff;--c6:#ff5d8f}
+.hero{text-align:center;padding:6px 0 2px}
+.logo{display:inline-flex;gap:6px}
+.lt{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;font-family:var(--disp);font-weight:900;font-size:26px;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.18);animation:bob 2.4s ease-in-out infinite}
+.lt.c1{background:var(--c1);transform:rotate(-6deg)}.lt.c2{background:var(--c2);animation-delay:.15s;transform:rotate(4deg)}.lt.c3{background:var(--c3);animation-delay:.3s;transform:rotate(-3deg)}.lt.c4{background:var(--c4);animation-delay:.45s;transform:rotate(5deg)}.lt.c5{background:var(--c5);animation-delay:.6s;transform:rotate(-4deg)}
+@keyframes bob{0%,100%{translate:0 0}50%{translate:0 -4px}}
+.tagline{margin:10px 0 0;font-size:13px;color:var(--muted)}
 .modes{display:grid;gap:12px}
-.mode{display:flex;gap:14px;align-items:center;text-align:left;padding:14px 16px;border-radius:14px;background:var(--paper);border:1px solid var(--line)}
-.mode .ico{font-family:var(--disp);font-weight:900;font-size:26px;color:var(--ink);width:44px;height:44px;display:grid;place-items:center;background:var(--ink-soft);border-radius:12px;flex:none}
-.mode b{font-family:var(--disp);font-size:17px}
-.mode span{display:block;color:var(--muted);font-size:12.5px}
+.modes2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mode{position:relative;display:flex;gap:12px;align-items:center;text-align:left;padding:14px 14px;border-radius:18px;background:var(--paper);border:2px solid var(--line);border-bottom-width:5px;transition:transform .08s,border-color .08s;min-width:0}
+.mode:active{transform:translateY(3px);border-bottom-width:2px}
+.mode .ico{font-family:var(--disp);font-weight:900;font-size:24px;color:#fff;width:46px;height:46px;display:grid;place-items:center;background:var(--ink);border-radius:14px;flex:none;box-shadow:0 3px 0 rgba(0,0,0,.15)}
+.mode>div{min-width:0}
+.mode b{font-family:var(--disp);font-size:16px;display:block;line-height:1.25}
+.mode span{display:block;color:var(--muted);font-size:12px;line-height:1.35}
+.modes2 .mode{flex-direction:column;align-items:flex-start;gap:8px;padding:12px 12px 10px}
+.mode.c-free{border-color:color-mix(in srgb,var(--c4) 45%,var(--line))}.mode.c-free .ico{background:var(--c4)}
+.mode.c-fall{border-color:color-mix(in srgb,var(--c3) 45%,var(--line))}.mode.c-fall .ico{background:var(--c3)}
+.mode.c-quest{border-color:color-mix(in srgb,var(--c5) 45%,var(--line))}.mode.c-quest .ico{background:var(--c5)}
+.mode.c-cpu{border-color:color-mix(in srgb,var(--c1) 45%,var(--line))}.mode.c-cpu .ico{background:var(--c1)}
+.mode.c-multi{border-color:color-mix(in srgb,var(--c6) 45%,var(--line))}.mode.c-multi .ico{background:var(--c6)}
+.mode.c-tut{border-color:var(--line)}.mode.c-tut .ico{background:var(--muted)}
+.mode.daily{background:linear-gradient(135deg,var(--c2),var(--c1));border-color:transparent;color:#1d2433;padding:16px 16px}
+.mode.daily .ico{background:rgba(255,255,255,.85);color:#1d2433;font-size:26px}
+.mode.daily b{font-size:19px;color:#1d2433}.mode.daily span{color:rgba(29,36,51,.75)}
+.mode.daily .arrow{margin-left:auto;font-size:28px;color:rgba(29,36,51,.6);font-family:var(--disp)}
+#vQuest .mode .ico{color:var(--ink);background:var(--ink-soft);box-shadow:none}
 .rules{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-size:13.5px}
 .rules ul{margin:6px 0 0;padding-left:1.2em}
 .rules li{margin:2px 0}
@@ -272,7 +296,8 @@ details[open] summary span:last-child{transform:rotate(180deg)}
 .rare .w{font-family:var(--disp);font-weight:700}
 .rare .k{color:var(--muted);font-size:12px;margin-left:6px;font-weight:500}
 .rare .d{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
-.homebtns{display:flex;gap:8px;justify-content:center}
+.homebtns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.homebtns button{border-radius:999px;border-width:2px;font-weight:700;font-size:13px}
 /* lobby */
 .code{font-family:var(--disp);font-weight:900;font-size:40px;letter-spacing:.2em;color:var(--ink);text-align:center}
 .players{display:flex;flex-wrap:wrap;gap:6px}
@@ -289,23 +314,28 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
 
 </head><body>
 <div class="wrap">
-<div class="topbar">
+<div class="topbar" id="topbar">
   <div class="brand">かなつなぎ<small>16マスのひらがな</small></div>
   <button class="ghost small" id="btnHome" hidden>ホームへ</button>
 </div>
 
 <!-- HOME -->
 <section class="view" id="vHome">
-  <p class="notice" id="tutHint" hidden style="margin:0;padding:8px 12px;border-radius:10px;background:var(--gold-soft);border:1px solid var(--gold);color:var(--fg)">はじめまして。まずは「あそびかたを練習」からどうぞ。</p>
-  <div class="modes">
-    <button class="mode" id="mDaily"><span class="ico">日</span><div><b>きょうの16マス</b><span id="dailyInfo">毎日0時に盤面が変わる。1日1回、120秒。メダルを集めよう。</span></div></button>
-    <button class="mode" id="mFree"><span class="ico">∞</span><div><b>フリー</b><span>ランダムな盤面で何度でも。</span></div></button>
-    <button class="mode" id="mFall"><span class="ico">↓</span><div><b>落ちもの</b><span>使ったマスが消えて新しい字が落ちてくる。コンボを狙え。</span></div></button>
-    <button class="mode" id="mQuest"><span class="ico">剣</span><div><b>クエスト</b><span>落ちものRPG。ためたポイントでカードを引き、ダンジョンへ。</span></div></button>
-    <button class="mode" id="mCpu"><span class="ico">CPU</span><div><b>CPUと対戦</b><span>かんたん〜おに。早い者勝ち・陣取りルールも。</span></div></button>
-    <button class="mode" id="mTut"><span class="ico">？</span><div><b>あそびかたを練習</b><span>1分で覚えるチュートリアル。</span></div></button>
-    <button class="mode" id="mMulti"><span class="ico">対</span><div><b>みんなで対戦</b><span id="multiInfo">同じ盤面で同時スタート。合言葉で集合。</span></div></button>
+  <div class="hero">
+    <div class="logo" aria-hidden="true"><span class="lt c1">か</span><span class="lt c2">な</span><span class="lt c3">つ</span><span class="lt c4">な</span><span class="lt c5">ぎ</span></div>
+    <p class="tagline">16マスのひらがなをなぞって、ことばをつなぐ。</p>
   </div>
+  <p class="notice" id="tutHint" hidden style="margin:0;padding:8px 12px;border-radius:12px;background:var(--gold-soft);border:2px solid var(--gold);color:var(--fg)">はじめまして！ まずは「あそびかた」の練習からどうぞ。</p>
+  <button class="mode daily" id="mDaily"><span class="ico">📅</span><div><b>きょうの16マス</b><span id="dailyInfo">毎日0時に盤面が変わる。1日1回、120秒。メダルを集めよう。</span></div><span class="arrow">›</span></button>
+  <div class="modes2">
+    <button class="mode c-free" id="mFree"><span class="ico">∞</span><div><b>フリー</b><span>何度でも。120秒。</span></div></button>
+    <button class="mode c-fall" id="mFall"><span class="ico">⤓</span><div><b>落ちもの</b><span>消えて、降って、コンボ。</span></div></button>
+    <button class="mode c-quest" id="mQuest"><span class="ico">⚔</span><div><b>クエスト</b><span>カードを集めてダンジョンへ。</span></div></button>
+    <button class="mode c-cpu" id="mCpu"><span class="ico">🤖</span><div><b>CPUと対戦</b><span>かんたん〜おに。</span></div></button>
+    <button class="mode c-multi" id="mMulti"><span class="ico">👥</span><div><b>みんなで対戦</b><span id="multiInfo">合言葉で集合、同時スタート。</span></div></button>
+    <button class="mode c-tut" id="mTut"><span class="ico">？</span><div><b>あそびかた</b><span>1分で覚える練習。</span></div></button>
+  </div>
+  <div class="homebtns"><button id="btnSettings">⚙ 設定</button><button id="btnHistory">🏆 履歴・実績</button><button id="btnDict">📖 みんなの辞書</button></div>
   <details class="rules" id="rulesBox">
     <summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between"><b>あそびかた</b><span class="muted small">▼</span></summary>
     <ul>
@@ -320,7 +350,6 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
       <li><b>対戦ルール</b>：ふつう（各自の合計点）／早い者勝ち（同じ言葉は先に出した人だけ得点）／陣取り（出した言葉のマスが自分の色に。マスの数で勝負）。CPU対戦でもみんなで対戦でも選べる。</li>
     </ul>
   </details>
-  <div class="homebtns"><button id="btnSettings">設定</button><button id="btnHistory">履歴・実績</button><button id="btnDict">みんなの辞書</button></div>
 </section>
 
 <!-- DAILY -->
@@ -104240,7 +104269,7 @@ const LAUNCH='2026-11-04';
 
 /* ---------- views ---------- */
 const VIEWS=['vHome','vLobby','vGame','vResult','vDaily','vSettings','vHistory','vDict','vAdmin','vCpu','vQuest','vParty'];
-function show(v){ for(const id of VIEWS) $(id).hidden=(id!==v); $('btnHome').hidden=(v==='vHome'||v==='vGame'); window.scrollTo(0,0); }
+function show(v){ for(const id of VIEWS) $(id).hidden=(id!==v); $('btnHome').hidden=(v==='vHome'||v==='vGame'); $('topbar').hidden=(v==='vHome'); window.scrollTo(0,0); }
 
 /* ---------- board render ---------- */
 function renderBoard(dists){
@@ -104513,7 +104542,7 @@ const TUT=(function(){
 /* ---------- home ---------- */
 function refreshHome(){
   const d=dailyDone(), all=dailyAll(), n=Object.keys(all).length, g=Object.values(all).filter(x=>x.medal===3).length;
-  $('dailyInfo').textContent=d?`今日：${d.score}点 ${MEDAL[d.medal]||'（メダルなし）'}。練習はできる。`:`毎日0時に盤面が変わる。1日1回、120秒。${n?`${n}日挑戦・金${g}`:'メダルを集めよう。'}`;
+  $('dailyInfo').textContent=d?`今日は ${d.score}点 ${MEDAL[d.medal]||'（メダルなし）'}。カレンダーと練習はこちら。`:`今日の盤面に挑戦！ 1日1回、120秒。${n?`${n}日挑戦・🥇${g}`:'メダルを集めよう。'}`;
 }
 /* ---------- daily calendar ---------- */
 let calYM=null;
@@ -105187,7 +105216,7 @@ const QUEST=(function(){
 })();
 
 window.KT_DEBUG={G,VS,CPU,QUEST};
-applySettings();
+applySettings(); $('topbar').hidden=true;
 refreshHome();
 if(!load('kt_seen',false)){ $('tutHint').hidden=false; save('kt_seen',true); }
 })();
