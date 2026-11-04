@@ -614,10 +614,6 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
     <svg class="lines" id="lines" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
     <div class="countdown" id="countdown" hidden>3</div>
   </div>
-  <div class="ctrls">
-    <button id="btnClear">クリア</button>
-    <button class="primary" id="btnSubmit">決定</button>
-  </div>
   <div class="vplayers" id="vsPlayers" hidden></div>
   <div class="found" id="found"></div>
   <div class="vlog" id="vsLog" hidden></div>
@@ -106589,7 +106585,7 @@ function bestWord(cands){
 }
 
 /* ---------- input ---------- */
-let dragging=false, dragMoved=false, tapOnLast=false;
+let dragging=false;
 function tileAt(x,y,loose){
   const r=$('board').getBoundingClientRect(), cw=r.width/N, ch=r.height/N;
   const c=Math.floor((x-r.left)/cw), row=Math.floor((y-r.top)/ch);
@@ -106609,32 +106605,24 @@ function tryAdd(i){
   G.path.push(i); updateSel(); SND.tap(G.path.length);
 }
 const bw=$('boardwrap');
+// 入力はなぞるだけ。指を離した時点で決定、2文字未満なら何もせず消える
 bw.addEventListener('pointerdown',e=>{
   if(G.over||Date.now()<G.lockUntil) return;
   const i=tileAt(e.clientX,e.clientY,true); if(i<0) return;
   if(G.mode==='quest'&&QUEST.tapTile(i)){ e.preventDefault(); return; }
-  e.preventDefault(); SND.unlock(); bw.setPointerCapture(e.pointerId); dragging=true; dragMoved=false;
-  const last=G.path[G.path.length-1];
-  tapOnLast=(G.path.length>0 && i===last);
-  if(tapOnLast){ /* 最後のマスから続ける（ドラッグ）か、タップで取り消し */ }
-  else if(G.path.includes(i)){ G.path=G.path.slice(0,G.path.indexOf(i)+1); updateSel(); } // 途中のマス → そこまで戻す
-  else if(G.path.length && NEIGH[last].includes(i)) tryAdd(i);
-  else { G.path=[i]; updateSel(); SND.tap(1); }
+  e.preventDefault(); SND.unlock(); bw.setPointerCapture(e.pointerId); dragging=true;
+  G.path=[i]; updateSel(); SND.tap(1);
 });
 bw.addEventListener('pointermove',e=>{
   if(!dragging) return;
   const i=tileAt(e.clientX,e.clientY); if(i<0) return;
-  if(i!==G.path[G.path.length-1]){ dragMoved=true; tryAdd(i); }
+  if(i!==G.path[G.path.length-1]) tryAdd(i);
 });
-bw.addEventListener('pointerup',e=>{
+bw.addEventListener('pointerup',()=>{
   if(!dragging) return; dragging=false;
-  if(dragMoved){ if(G.path.length>=2) submit(); }
-  else if(tapOnLast){ G.path.pop(); updateSel(); } // 最後のマスをもう一度タップ → 1つ戻す
-  tapOnLast=false;
+  if(G.path.length>=2) submit(); else { G.path=[]; updateSel(); }
 });
-bw.addEventListener('pointercancel',()=>{dragging=false});
-$('btnClear').onclick=()=>{G.path=[];updateSel()};
-$('btnSubmit').onclick=()=>{ if(G.path.length>=2) submit(); else if(G.path.length===1) feedback('2文字以上つなげてね','dup'); };
+bw.addEventListener('pointercancel',()=>{ dragging=false; G.path=[]; updateSel(); });
 let quitArmed=0, quitTimer=null;
 function disarmQuit(){ quitArmed=0; clearTimeout(quitTimer); const b=$('btnGiveUp'); b.classList.remove('armed'); b.textContent=(G.mode==='quest')?'逃げる':'終了'; }
 $('btnGiveUp').onclick=()=>{
@@ -106793,10 +106781,10 @@ const TUT=(function(){
   const TILES=['さ','く','ら','ん','き','つ','て','い','そ','は','み','ね','ほ','し','す','う'].map(b=>({base:b}));
   TILES[9].alts=['ば','ぱ'];
   const STEPS=[
-    {text:'となり合うマスを指でなぞって言葉を作る。まずは <b>さくら</b>。なぞり終えて指を離すと決定。', path:[0,1,2], word:'さくら'},
+    {text:'となり合うマスを指でなぞって言葉を作る。まずは <b>さくら</b>。指を離した時点で決まる。', path:[0,1,2], word:'さくら'},
     {text:'「つ」「や」「ゆ」「よ」「あ〜お」は小さい字としても使える。「つ」を「っ」として <b>きって</b>。', path:[4,5,6], word:'きって'},
     {text:'「は/ば ぱ」のように2つ書かれたマスはどちらで読んでもいい。「ば」と読んで <b>そば</b>。ななめにも進める。', path:[8,9], word:'そば'},
-    {text:'ゲーム中は<b>ミッション</b>が出る（下の黄色い枠）。条件に合う言葉は得点が<b>2倍</b>。いまは「す」で始まる言葉なので、下から上に <b>すし</b>。タップで1マスずつ選んで「決定」でもOK。', path:[14,13], word:'すし', mission:true},
+    {text:'ゲーム中は<b>ミッション</b>が出る（下の黄色い枠）。条件に合う言葉は得点が<b>2倍</b>。いまは「す」で始まる言葉なので、下から上に <b>すし</b>。', path:[14,13], word:'すし', mission:true},
     {text:'これで準備完了。本番は120秒、長い言葉・めずらしい言葉（★）ほど高得点。', done:true},
   ];
   let step=0;
