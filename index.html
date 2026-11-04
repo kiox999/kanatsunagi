@@ -492,9 +492,9 @@ footer{margin-top:auto;font-size:11px;color:var(--muted);text-align:center;paddi
   </div>
   <div class="card" id="dpApply" hidden>
     <h2 style="font-size:18px;margin-bottom:4px">「<span id="dpWordTxt"></span>」を申請</h2>
-    <p class="notice" style="margin:0 0 10px">辞書にないことを確認済み。表記とひとことを添えて送る。</p>
+    <p class="notice" style="margin:0 0 10px">辞書にないことを確認済み。「ふつうの書き方」は<b>漢字やカタカナ</b>で（例：ぱずどら → パズドラ／かんさいべん → 関西弁）。ひらがなでしか書かない言葉はそのままでOK。</p>
     <input type="hidden" id="dpWord">
-    <div class="row" style="margin-bottom:6px"><input type="text" id="dpKanji" maxlength="20" placeholder="ふつうの書き方（漢字・カタカナなど）"></div>
+    <div class="row" style="margin-bottom:6px"><input type="text" id="dpKanji" maxlength="20" placeholder="ふつうの書き方（漢字・カタカナ。かな書きならそのまま）"></div>
     <div class="row" style="margin-bottom:6px"><input type="text" id="dpNote" maxlength="60" placeholder="どういう言葉か、ひとこと"></div>
     <div class="row" style="margin-bottom:8px"><input type="text" id="dpBy" maxlength="12" placeholder="あなたの名前（申請者として表示）"></div>
     <div class="row"><button class="primary" id="dpSend">申請する</button><span class="small" id="dpMsg"></span></div>
@@ -107163,7 +107163,9 @@ const MP=(function(){
 
 /* ---------- みんなの辞書（申請・承認・読み込み） ---------- */
 const DICTX=(function(){
-  const RARES=[['0','星なし（ふつう）'],['1','★ やや'],['2','★★ レア'],['3','★★★ 激レア']];
+  const RARES=[['0','星なし'],['1','★ やや'],['2','★★ レア'],['3','★★★ 激レア']];
+  const RARE_GUIDE='星なし＝誰でも知っている／★ やや＝知ってはいるがすぐ出ない／★★ レア＝知る人ぞ知る／★★★ 激レア＝専門的・マニアック。3文字以下はどれを選んでも星なし扱い。';
+  function scoreAt(w,t){ const sm=(w.match(/[っゃゅょ]/g)||[]).length, ti=(w.match(/[ぁぃぅぇぉ]/g)||[]).length*3, ba=(w.match(/ー/g)||[]).length, dk=DAKU_RE.test(w)?2:0; return Math.round(BASE[Math.min(w.length,8)]*MULT[w.length<=3?0:t])+sm+ti+ba+dk; }
   // 管理用の合言葉（SHA-256）。変えるときは下のハッシュを差し替える。
   async function dbAll(path){ const db=MP.db(); if(!db) return {}; if(db.all) return db.all(path); const q=await db.collection(path).get(); const o={}; q.docs.forEach(d=>{ o[d.id]=d.data(); }); return o; }
   function addWord(w,entry){ if(!/^[ぁ-んー]{2,8}$/.test(w)) return; const prev=DICT.get(w); if(prev){ if(!prev.some(e=>e[2]===entry[2])) prev.push(entry); return; } DICT.set(w,[entry]); let node=TRIE; for(const ch of w) node=node[ch]||(node[ch]=Object.create(null)); node.$=1; }
@@ -107181,7 +107183,7 @@ const DICTX=(function(){
     const f=$('propForm'); f.hidden=false;
     let nick=''; try{ nick=localStorage.getItem('kt_nick')||''; }catch(e){}
     f.innerHTML=`<div class="card" style="padding:10px 12px"><b style="font-family:var(--disp);font-size:18px">${w}</b>
-      <div class="row" style="margin-top:8px"><input type="text" id="propKanji" maxlength="20" placeholder="ふつうの書き方（漢字・カタカナなど）"></div>
+      <div class="row" style="margin-top:8px"><input type="text" id="propKanji" maxlength="20" placeholder="ふつうの書き方（漢字・カタカナ。かな書きならそのまま）"></div>
       <div class="row" style="margin-top:6px"><input type="text" id="propNote" maxlength="60" placeholder="どういう言葉か、ひとこと"></div>
       <div class="row" style="margin-top:6px"><input type="text" id="propBy" maxlength="12" placeholder="あなたの名前（申請者として表示）" value="${MP.esc(nick)}"></div>
       <div class="row" style="margin-top:8px"><button class="primary" id="propSend">申請する</button><button class="ghost" id="propCancel">やめる</button><span class="small muted" id="propMsg"></span></div></div>`;
@@ -107221,10 +107223,11 @@ const DICTX=(function(){
     const pend=items.filter(x=>x.status==='pending');
     $('adminCount').textContent=`未処理 ${pend.length} ／ 採用済み ${Object.keys(extra||{}).length}語`;
     const esc=MP.esc;
-    $('adminList').innerHTML=pend.length?pend.map(x=>`<div class="card" style="padding:10px 12px" data-id="${x.id}">
+    $('adminList').innerHTML=(pend.length?`<p class="notice" style="margin:0 0 8px">${RARE_GUIDE}</p>`:'')+(pend.length?pend.map(x=>`<div class="card" style="padding:10px 12px" data-id="${x.id}">
       <div class="row" style="justify-content:space-between"><b style="font-family:var(--disp);font-size:18px">${esc(x.w)}</b><span class="small muted">${new Date(x.t).toLocaleString('ja-JP')}</span></div>
       <div class="small">${esc(x.d||'')} ${x.note?'— '+esc(x.note):''} <span class="muted">by ${esc(x.by||'')}</span>${DICT.has(x.w)?' <span class="mchip">辞書にあり</span>':''}</div>
-      <div class="row" style="margin-top:8px;flex-wrap:wrap"><input type="text" class="adKanji" value="${esc(x.d||'')}" placeholder="表記" style="max-width:160px"><select class="adRare">${RARES.map(g=>`<option value="${g[0]}"${g[0]==="1"?" selected":""}>${g[1]}</option>`).join('')}</select><button class="primary adOk" ${(DICT.has(x.w)||DICT.has(canon(x.w)))?'disabled title="すでに辞書にある"':''}>採用</button><button class="adNo">却下</button></div></div>`).join(''):'<p class="muted">未処理の申請はない</p>';
+      <div class="row" style="margin-top:8px;flex-wrap:wrap"><input type="text" class="adKanji" value="${esc(x.d||'')}" placeholder="表記" style="max-width:160px"><select class="adRare">${RARES.map(g=>`<option value="${g[0]}"${g[0]==="1"?" selected":""}>${g[1]}</option>`).join('')}</select><button class="primary adOk" ${(DICT.has(x.w)||DICT.has(canon(x.w)))?'disabled title="すでに辞書にある"':''}>採用</button><button class="adNo">却下</button></div>
+      <div class="small muted" style="margin-top:4px">この言葉の得点：星なし ${scoreAt(x.w,0)}点／★ ${scoreAt(x.w,1)}／★★ ${scoreAt(x.w,2)}／★★★ ${scoreAt(x.w,3)}</div></div>`).join(''):'<p class="muted">未処理の申請はない</p>');
     $('adminList').querySelectorAll('[data-id]').forEach(card=>{
       const id=card.dataset.id, x=items.find(i=>i.id===id);
       card.querySelector('.adOk').onclick=async()=>{ const d=card.querySelector('.adKanji').value.trim()||x.w, t=+card.querySelector('.adRare').value||0, f=0;
