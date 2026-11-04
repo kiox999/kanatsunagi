@@ -228,6 +228,7 @@ input[type=text]{font-family:inherit;font-size:16px;padding:9px 12px;border:1px 
 .gyou{margin-bottom:10px}
 .gyou h4{font-family:var(--disp);font-size:13px;margin:0 0 4px;color:var(--ink);border-bottom:2px solid var(--line);padding-bottom:2px}
 .gyou h4 .muted{font-weight:500;font-size:11px}
+.fw select.exRare{font-family:inherit;font-size:11px;padding:0 2px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--fg)}
 .gbadges{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
 .gbadge{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border:2px solid var(--bad);color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--paper));border-radius:0;line-height:1.5;white-space:nowrap}
 .gline{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
@@ -107184,7 +107185,7 @@ const DICTX=(function(){
   // 管理用の合言葉（SHA-256）。変えるときは下のハッシュを差し替える。
   async function dbAll(path){ const db=MP.db(); if(!db) return {}; if(db.all) return db.all(path); const q=await db.collection(path).get(); const o={}; q.docs.forEach(d=>{ o[d.id]=d.data(); }); return o; }
   function addWord(w,entry){ if(!/^[ぁ-んー]{2,8}$/.test(w)) return; const prev=DICT.get(w); if(prev){ if(!prev.some(e=>e[2]===entry[2])) prev.push(entry); return; } DICT.set(w,[entry]); let node=TRIE; for(const ch of w) node=node[ch]||(node[ch]=Object.create(null)); node.$=1; }
-  async function loadExtra(){ try{ await MP.ready(); const all=await dbAll('extra'); let n=0; for(const [w,v] of Object.entries(all||{})){ if(v&&v.ok!==false){ addWord(w,[Math.min(3,Math.max(0,v.t==null?1:+v.t)),+v.f||0,v.d||w,true]); n++; } } return n; }catch(e){ return 0; } }
+  async function loadExtra(){ try{ await MP.ready(); const all=await dbAll('extra'); let n=0; for(const [w,v] of Object.entries(all||{})){ if(v&&v.ok!==false){ addWord(w,[Math.min(3,Math.max(0,v.t==null?autoT(w):+v.t)),0,v.d||w,true]); n++; } } return n; }catch(e){ return 0; } }
   function renderRejected(){
     const box=$('resReject'); if(!box) return;
     const list=G.rejected.filter(w=>!DICT.has(w));
@@ -107250,8 +107251,10 @@ const DICTX=(function(){
       card.querySelector('.adNo').onclick=async()=>{ try{ await db.doc('proposals/'+id).update({status:'ng'}); card.remove(); }catch(e){} };
     });
     const ex=Object.entries(extra||{}).sort((a,b)=>(b[1].at||0)-(a[1].at||0));
-    $('adminExtra').innerHTML=ex.length?byGyou(ex).map(([g,list])=>`<div class="gyou"><h4>${g} <span class="muted">${list.length}</span></h4><div class="found">${list.map(([w,v])=>`<span class="fw" data-w="${esc(w)}"><b>${esc(w)}</b><i>${esc(v.d||'')}</i><i>${v.t==null?'★':'★'.repeat(+v.t)||'星なし'}</i><button class="ghost small adDel" style="padding:0 6px">×</button></span>`).join('')}</div></div>`).join(''):'<span class="muted small">まだない</span>';
+    $('adminExtra').innerHTML=ex.length?byGyou(ex).map(([g,list])=>`<div class="gyou"><h4>${g} <span class="muted">${list.length}</span></h4><div class="found">${list.map(([w,v])=>`<span class="fw" data-w="${esc(w)}"><b>${esc(w)}</b><i>${esc(v.d||'')}</i><select class="exRare">${RARES.map(g=>`<option value="${g[0]}"${+g[0]===(v.t==null?autoT(w):+v.t)?' selected':''}>${g[1]}</option>`).join('')}</select><button class="ghost small adDel" style="padding:0 6px">×</button></span>`).join('')}</div></div>`).join(''):'<span class="muted small">まだない</span>';
     $('adminExtra').querySelectorAll('.adDel').forEach(b=>b.onclick=async()=>{ const w=b.closest('[data-w]').dataset.w; try{ await db.doc('extra/'+w).set({ok:false,at:Date.now()}); b.closest('[data-w]').remove(); }catch(e){} });
+    $('adminExtra').querySelectorAll('.exRare').forEach(sel=>sel.onchange=async()=>{ const el2=sel.closest('[data-w]'), w=el2.dataset.w, t=+sel.value;
+      try{ await db.doc('extra/'+w).update({t}); const e=DICT.get(w); if(e&&e[0]&&e[0][3]) e[0][0]=t; el2.style.borderColor='var(--ok)'; setTimeout(()=>{ el2.style.borderColor=''; },800); }catch(e){ sel.style.borderColor='var(--bad)'; } });
   }
   $('btnAdminBack').onclick=()=>{ show('vHome'); refreshHome(); };
   // みんなの辞書ページ
