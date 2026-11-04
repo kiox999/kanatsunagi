@@ -107177,7 +107177,9 @@ const DICTX=(function(){
     for(const [,v] of m) v.sort((a,b)=>{ const ka=canon(a[0]),kb=canon(b[0]); for(let i=0;i<Math.max(ka.length,kb.length);i++){ const x=KANA_ORDER.indexOf(ka[i]||''),y=KANA_ORDER.indexOf(kb[i]||''); if(x!==y) return x-y; } return 0; });
     return [...m.entries()].filter(([,v])=>v.length);
   }
-  const RARE_GUIDE='星なし＝誰でも知っている／★ やや＝知ってはいるがすぐ出ない／★★ レア＝知る人ぞ知る／★★★ 激レア＝専門的・マニアック。3文字以下はどれを選んでも星なし扱い。';
+  // レア度は文字数から自動（辞書の既存語と同じ基準）。管理画面で上げ下げできる
+  function autoT(w){ return w.length<=3?0:w.length===4?1:w.length===5?2:3; }
+  const RARE_GUIDE='レア度は文字数から自動で決まる（3字以下＝星なし／4字＝★／5字＝★★／6字以上＝★★★）。有名すぎる・難しすぎる言葉だけ手で上げ下げすればOK。';
   function scoreAt(w,t){ const sm=(w.match(/[っゃゅょ]/g)||[]).length, ti=(w.match(/[ぁぃぅぇぉ]/g)||[]).length*3, ba=(w.match(/ー/g)||[]).length, dk=DAKU_RE.test(w)?2:0; return Math.round(BASE[Math.min(w.length,8)]*MULT[w.length<=3?0:t])+sm+ti+ba+dk; }
   // 管理用の合言葉（SHA-256）。変えるときは下のハッシュを差し替える。
   async function dbAll(path){ const db=MP.db(); if(!db) return {}; if(db.all) return db.all(path); const q=await db.collection(path).get(); const o={}; q.docs.forEach(d=>{ o[d.id]=d.data(); }); return o; }
@@ -107239,8 +107241,8 @@ const DICTX=(function(){
     $('adminList').innerHTML=(pend.length?`<p class="notice" style="margin:0 0 8px">${RARE_GUIDE}</p>`:'')+(pend.length?pend.map(x=>`<div class="card" style="padding:10px 12px" data-id="${x.id}">
       <div class="row" style="justify-content:space-between"><b style="font-family:var(--disp);font-size:18px">${esc(x.w)}</b><span class="small muted">${new Date(x.t).toLocaleString('ja-JP')}</span></div>
       <div class="small">${esc(x.d||'')} ${x.note?'— '+esc(x.note):''} <span class="muted">by ${esc(x.by||'')}</span>${DICT.has(x.w)?' <span class="mchip">辞書にあり</span>':''}</div>
-      <div class="row" style="margin-top:8px;flex-wrap:wrap"><input type="text" class="adKanji" value="${esc(x.d||'')}" placeholder="表記" style="max-width:160px"><select class="adRare">${RARES.map(g=>`<option value="${g[0]}"${g[0]==="1"?" selected":""}>${g[1]}</option>`).join('')}</select><button class="primary adOk" ${(DICT.has(x.w)||DICT.has(canon(x.w)))?'disabled title="すでに辞書にある"':''}>採用</button><button class="adNo">却下</button></div>
-      <div class="small muted" style="margin-top:4px">この言葉の得点：星なし ${scoreAt(x.w,0)}点／★ ${scoreAt(x.w,1)}／★★ ${scoreAt(x.w,2)}／★★★ ${scoreAt(x.w,3)}</div></div>`).join(''):'<p class="muted">未処理の申請はない</p>');
+      <div class="row" style="margin-top:8px;flex-wrap:wrap"><input type="text" class="adKanji" value="${esc(x.d||'')}" placeholder="表記" style="max-width:160px"><select class="adRare">${RARES.map(g=>`<option value="${g[0]}"${+g[0]===autoT(x.w)?" selected":""}>${g[1]}${+g[0]===autoT(x.w)?'（自動）':''}</option>`).join('')}</select><button class="primary adOk" ${(DICT.has(x.w)||DICT.has(canon(x.w)))?'disabled title="すでに辞書にある"':''}>採用</button><button class="adNo">却下</button></div>
+      <div class="small muted" style="margin-top:4px">${x.w.length}文字 → 自動で ${RARES[autoT(x.w)][1]}（${scoreAt(x.w,autoT(x.w))}点）　／　星なし ${scoreAt(x.w,0)}・★ ${scoreAt(x.w,1)}・★★ ${scoreAt(x.w,2)}・★★★ ${scoreAt(x.w,3)}</div></div>`).join(''):'<p class="muted">未処理の申請はない</p>');
     $('adminList').querySelectorAll('[data-id]').forEach(card=>{
       const id=card.dataset.id, x=items.find(i=>i.id===id);
       card.querySelector('.adOk').onclick=async()=>{ const d=card.querySelector('.adKanji').value.trim()||x.w, t=+card.querySelector('.adRare').value||0, f=0;
