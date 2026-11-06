@@ -5,9 +5,32 @@
 
 ## 公開手順（GitHub Pages）
 
-1. このフォルダの `index.html` と `README.md` をリポジトリ直下に置く
+1. このフォルダの中身をまるごとリポジトリ直下に置く
+   （`index.html` / `manifest.webmanifest` / `sw.js` / `icon-*.png` / `favicon.svg` / `og.jpg` / `shot-*.png` / `README.md`）
 2. リポジトリの Settings → Pages → Branch を `main` / `(root)` にして保存
 3. 数分後に `https://<ユーザー名>.github.io/<リポジトリ名>/` で開ける
+
+## ウェブアプリ（PWA）として
+
+- `manifest.webmanifest` + `sw.js` 入り。スマホのブラウザで開いて「ホーム画面に追加」すると、
+  アドレスバーなしの全画面アプリとして起動する（初回だけ案内のチップが出る）
+- Service Worker が本体・アイコン・Webフォントをキャッシュするので、**2回目以降は一瞬で開き、
+  機内モードでも遊べる**（日替わり・フリー・落ちもの・CPU対戦・クエスト。オンライン対戦と
+  みんなの辞書だけは通信が必要）
+- 更新したら `sw.js` の `VERSION` が変わり、開いている端末には「新しいバージョンがあります」
+  と再読み込みボタンが出る。ゲーム中に勝手にリロードはしない
+- `sw.js` のバージョンは `build.py` が `index.html` のハッシュから自動で振るので、手で直す必要はない
+
+### ビルド
+
+```
+python3 build.py
+```
+
+`kana_head.html` + `words.txt` + `kana_script.js`（+ 公開版は `public_cfg.html` / `fb_adapter.js` /
+`pwa_tail.html`）から `kanatsunagi.html`（アーティファクト版）と `public/`（公開版一式）を作る。
+アイコン類は `assets/` にあるものをコピーしているだけなので、作り直すときは `icon.html` / `og.html` を
+`render.js` でレンダリングし直す。
 
 ## 対戦を動かす（Firebase Realtime Database）
 

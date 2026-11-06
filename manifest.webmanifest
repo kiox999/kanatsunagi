@@ -1,0 +1,25 @@
+{
+  "name": "かなつなぎ",
+  "short_name": "かなつなぎ",
+  "description": "ひらがなをなぞって言葉をつくるパズル。日替わりチャレンジ、CPU対戦、オンライン対戦、落ちものクエスト。",
+  "lang": "ja",
+  "dir": "ltr",
+  "id": "/kanatsunagi/",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#eef1f5",
+  "theme_color": "#2f4b8a",
+  "categories": ["games", "education", "puzzle"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "shot-home.png", "sizes": "828x1792", "type": "image/png", "form_factor": "narrow", "label": "ホーム画面" },
+    { "src": "shot-game.png", "sizes": "828x1792", "type": "image/png", "form_factor": "narrow", "label": "盤面をなぞって言葉をつくる" }
+  ]
+}
